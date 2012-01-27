@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?> 
+<menu
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/msg_reprocess" android:title="Reprocess" android:titleCondensed="Reprocess"></item>
+    <item android:id="@+id/msg_cancel" android:title="Cancel" android:titleCondensed="Cancel"></item>
+</menu>
+  

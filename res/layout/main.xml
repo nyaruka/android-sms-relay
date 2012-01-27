@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:gravity="center"
+    android:padding="0dp"
+    android:background="#FFFFFF" android:layout_height="match_parent" android:orientation="vertical">
+
+<ImageView android:id="@+id/logo" android:src="@drawable/nyaruka_logo" android:layout_width="fill_parent" android:layout_height="wrap_content" android:paddingBottom="10dp"></ImageView>
+<View android:id="@+id/view1" android:layout_width="fill_parent" android:layout_height="1px" android:background="#555" android:paddingBottom="10dp"></View>
+<ListView android:layout_height="match_parent" android:id="@android:id/list" android:layout_width="match_parent" android:background="#FFFFFF"></ListView>
+	
+</LinearLayout>

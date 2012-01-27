@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory 
+        android:title="Relay Preferences" android:key="main">
+        
+        <CheckBoxPreference 
+            android:defaultValue="false" android:summary="Whether to process incoming SMS messages" android:key="process_messages" android:title="Process Messages"/>
+        
+        <ListPreference 
+            android:key="update_interval"
+            android:title="Update Interval"
+            android:defaultValue="1000" 
+            android:entries="@array/updateInterval"
+            android:entryValues="@array/updateIntervalValues"
+            android:dependency="process_messages"
+        android:summary="Define how often the server will be checked for outgoing messages"/>    
+            
+    </PreferenceCategory>
+
+    <PreferenceCategory 
+        android:title="Server Configuration" android:key="server">
+
+        <EditTextPreference
+            android:dialogTitle="Server Receive URL" android:dialogMessage="Enter the server receive URL" android:defaultValue="http://" android:summary="Defines the URL messages will be delivered to" android:title="Receive URL" android:key="receive_url"/>
+
+		<EditTextPreference
+            android:dialogTitle="Server Outbox URL" android:dialogMessage="Enter the server outbox URL" android:defaultValue="http://" android:summary="Defines the URL outgoing messages will be fetched from" android:title="Outbox URL" android:key="outbox_url"/>
+            
+		<EditTextPreference
+            android:dialogTitle="Server Delivery URL" android:dialogMessage="Enter the server delivery URL" android:defaultValue="http://" android:summary="Defines the URL outgoing messages will be fetched from" android:title="Delivery URL" android:key="delivery_url"/>
+		            
+
+    </PreferenceCategory><PreferenceCategory android:title="Advanced">
+        <Preference android:title="Clear Messages" android:summary="Clears all messages in our local database" android:key="clear_messages"/>
+    </PreferenceCategory>
+    
+</PreferenceScreen>
