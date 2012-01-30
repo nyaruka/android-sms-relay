@@ -62,6 +62,7 @@ public final class SMSModem extends BroadcastReceiver {
 				intents.add(sentIntent);
 			}
 			pendingSMS.put(token, parts.size());
+			Log.d(TAG, "Sending to: " + address + " parts: " + parts + " intents: " + intents);
 			smsManager.sendMultipartTextMessage(address, null, parts, intents, null);
 		}
 	}

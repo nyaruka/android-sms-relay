@@ -27,29 +27,41 @@ public class CheckService extends WakefulIntentService {
 		try{
 			RelayService relayer = RelayService.get();
 			if (relayer != null){
+				// check our connection
+				relayer.checkConnection();
+				
 				try{
 					relayer.resendErroredSMS();
-				} catch (Exception e){
-					Log.d(TAG, "Error resending SMSes.", e);
+				} catch (Throwable t){
+					Log.d(TAG, "Error resending SMSes.", t);
 				}
 				
 				try{
 					relayer.sendPendingMessagesToServer();
-				} catch (Exception e){
-					Log.d(TAG, "Error resending to server.", e);
+				} catch (Throwable t){
+					Log.d(TAG, "Error resending to server.", t);
 				}
 
 				try{
 					relayer.markDeliveriesOnServer();
-				} catch (Exception e){
-					Log.d(TAG, "Error marking deliveries on the server", e);
+				} catch (Throwable t){
+					Log.d(TAG, "Error marking deliveries on the server", t);
 				}
 				
 				try{
 					relayer.checkOutbox();
-				} catch (Exception e){
-					Log.d(TAG, "Error checking outbox", e);
+				} catch (Throwable t){
+					Log.d(TAG, "Error checking outbox", t);
 				}
+				
+				try {
+					relayer.trimMessages();					
+				} catch (Throwable t){
+					Log.d(TAG, "Error trimming message", t);
+				}
+				
+				// restore our connection
+				relayer.restoreConnection();
 			} else {
 				Log.d(TAG, "No RelayService started yet.");
 			}

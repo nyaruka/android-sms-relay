@@ -85,15 +85,6 @@ public class MainActivity extends ListActivity {
 	  }
 	}
 	
-	// adds a message to our UI list
-    public static void addTextMessage(TextMessage textMessage){
-		Message msg = new Message();
-		if (s_this != null){
-			s_updateMessages.add(textMessage);
-			s_this.updateHandler.sendMessage(msg);
-		}
-    }
-    
     // update an existing message on our UI list
     public static void updateMessage(TextMessage textMessage){
 		Message msg = new Message();
@@ -150,7 +141,7 @@ public class MainActivity extends ListActivity {
 	    		 
 	    	case R.id.refresh:
 	    	    WakefulIntentService.scheduleAlarms(new com.nyaruka.androidrelay.AlarmListener(1), getApplicationContext());
-	    	    Toast.makeText(MainActivity.this, "Checking for new messages", Toast.LENGTH_LONG).show();
+	    	    Toast.makeText(MainActivity.this, "Syncing messages", Toast.LENGTH_LONG).show();
 	    		return true;
 	    }
 	    return false;

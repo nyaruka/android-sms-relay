@@ -19,8 +19,10 @@ import com.nyaruka.androidrelay.data.TextMessage;
 import com.nyaruka.androidrelay.data.TextMessageHelper;
 
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.wifi.WifiManager;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.util.Log;
@@ -43,12 +45,55 @@ public class RelayService extends Service implements SMSModem.SmsModemListener {
 		modem = new SMSModem(getApplicationContext(), this);
 		Log.d(TAG, "RelayService Created.");
 		promoteErroredMessages();
+		kickService();
 	}
 	
 	public TextMessageHelper getHelper(){
 		return AndroidRelay.getHelper(getApplicationContext());
 	}
 
+	/**
+	 * Responsible for checking whether the connection is up.  This is accomplished by trying to 
+	 * get the http://mobile.google.com/ homepage.  If that comes back then it is assumed our
+	 * connection is just fine.  If it does not and we are on WIFI, then we try to switch
+	 * to the mobile network.
+	 */
+	public void checkConnection(){
+		WifiManager wifi = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+		m_targetWifiState = UNCHANGED;
+		
+		// try to fetch ze googles
+		try{
+			fetchURL("http://www.google.com/");
+			Log.d(TAG, "Wifi test successful, continuing with wifi state: " + wifi.isWifiEnabled());
+		} catch (Throwable t){
+			m_targetWifiState = wifi.isWifiEnabled() ? ON : OFF;
+			
+			// well that didn't work, let's flip our connection status, that might just help.. we sleep a bit so things can connect
+			boolean newWifiState = !wifi.isWifiEnabled();
+			Log.d(TAG, "Connection test failed, flipping WIFI state to: " + newWifiState);
+			wifi.setWifiEnabled(newWifiState);
+			try{
+				Thread.sleep(15000);
+			} catch (Throwable tt){}
+		}
+	}
+	
+	/**
+	 * Restores the previous connection settings.  That is if we were on WiFi previously, then this 
+	 * method will reenable WiFi again.
+	 */
+	public void restoreConnection(){
+		WifiManager wifi = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+		if (m_targetWifiState == OFF){
+			Log.d(TAG, "Restoring WIFI to Off");
+			wifi.setWifiEnabled(false);
+		} else if (m_targetWifiState == ON){
+			Log.d(TAG, "Restoring WIFI to On");
+			wifi.setWifiEnabled(true);
+		}
+	}
+	
 	/***
 	 * This should be run only when our service starts, and takes care of resending any messages
 	 * that were queued but which we never got a reply for.  This could result in double sends
@@ -87,23 +132,34 @@ public class RelayService extends Service implements SMSModem.SmsModemListener {
 		}	
 	}
 	
+	/**
+	 * Trims all but the latest 100 messages in our table.
+	 */
+	public void trimMessages(){
+		TextMessageHelper helper = getHelper();
+		helper.trimMessages();
+	}
+	
 	/***
 	 * Goes through all the messages which have errors and resends them.  Note that we only try to send
 	 * five at a time, so it could take a bit to clear out the backlog.
 	 */
 	public void resendErroredSMS(){
 		TextMessageHelper helper = getHelper();
-		List<TextMessage> msgs = helper.withStatus(this.getApplicationContext(), TextMessage.OUTGOING, TextMessage.ERRORED);
+		List<TextMessage> msgs = helper.erroredOutgoing(getApplicationContext());
 
 		int count = 0;
 		for(TextMessage msg : msgs){
-			modem.sendSms(msg.number, msg.text, "" + msg.id);
-			msg.status = TextMessage.QUEUED;
+			try{
+				modem.sendSms(msg.number, msg.text, "" + msg.id);
+				msg.status = TextMessage.QUEUED;
+				Log.d(TAG, "resent " + msg.id + " -- " + msg.text);
+			} catch (Throwable t){
+				msg.status = TextMessage.ERRORED;
+				Log.d(TAG, "errored " + msg.id + " -- " + msg.text);
+			}
 			helper.updateMessage(msg);
-
 			MainActivity.updateMessage(msg);
-				
-			Log.d(TAG, "resent " + msg.id + " -- " + msg.text);
 			
 			count++;
 			if (count >= 5){
@@ -208,7 +264,7 @@ public class RelayService extends Service implements SMSModem.SmsModemListener {
 			Log.d(TAG, "Msg given to server.");
 		} catch (Throwable t) {
 			Log.d(TAG, "Got Error: "+ t.getMessage(), t);
-			msg.error = t.getMessage();
+			msg.error = t.getClass().getSimpleName() + ": " + t.getMessage();
 			msg.status = TextMessage.ERRORED;
 		}        
 		
@@ -236,6 +292,7 @@ public class RelayService extends Service implements SMSModem.SmsModemListener {
 			Log.d(TAG, "Sending: "+ url);
 		
 			try {
+				String content = fetchURL(url);
 				msg.status = TextMessage.DONE;
 				msg.error = null;
 				Log.d(TAG, "Msg marked as delivered.");
@@ -317,8 +374,12 @@ public class RelayService extends Service implements SMSModem.SmsModemListener {
 
 	public void sendMessage(TextMessage msg){
 		Log.d(TAG, "=== SMS OUT: " + msg.number + ": " + msg.text);		
-		MainActivity.addTextMessage(msg);
-		modem.sendSms(msg.number, msg.text, "" + msg.id);
+		try {
+			modem.sendSms(msg.number, msg.text, "" + msg.id);
+		} catch (Exception e){
+			msg.status = TextMessage.ERRORED;
+		}
+		MainActivity.updateMessage(msg);
 	}
 	
 	public void onNewSMS(String number, String message) {
@@ -342,7 +403,7 @@ public class RelayService extends Service implements SMSModem.SmsModemListener {
 		helper.createMessage(msg);
 	
 		Log.d(TAG, "=== SMS IN:" + msg.number + ": " + msg.text);
-		MainActivity.addTextMessage(msg);
+		MainActivity.updateMessage(msg);
 		
 		kickService();
 	}	
@@ -372,4 +433,11 @@ public class RelayService extends Service implements SMSModem.SmsModemListener {
 	}
 	
 	public SMSModem modem;
+	
+	public static final int UNCHANGED = 0;
+	public static final int ON = 1;
+	public static final int OFF = -1;
+	
+	/** whether the WiFi network is set */
+	private int m_targetWifiState = UNCHANGED;
 }

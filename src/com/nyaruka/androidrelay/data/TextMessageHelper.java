@@ -43,6 +43,11 @@ public class TextMessageHelper extends SQLiteOpenHelper {
 		final SQLiteDatabase writableDatabase = getWritableDatabase();
 		writableDatabase.delete("messages", null, null);
 	}
+	
+	public void trimMessages(){
+		final SQLiteDatabase writableDatabase = getWritableDatabase();
+		writableDatabase.execSQL("DELETE FROM `messages` WHERE id NOT IN (SELECT ID FROM `messages` ORDER BY `id` DESC LIMIT 100) and (`status` = 'H' OR `status` = 'D')");		
+	}
 
 	public void createMessage(TextMessage message) {
 		final SQLiteDatabase writableDatabase = getWritableDatabase();
@@ -78,7 +83,7 @@ public class TextMessageHelper extends SQLiteOpenHelper {
 	public List<TextMessage> getAllMessages(){
 		final SQLiteDatabase readableDatabase = getReadableDatabase();
 		final Cursor cursor = readableDatabase.query("messages",
-			TEXT_MESSAGE_COLS, null, null, null, null, "id", null);
+			TEXT_MESSAGE_COLS, null, null, null, null, "id DESC", null);
 
 		return listFromCursor(cursor);
 	}
@@ -86,7 +91,15 @@ public class TextMessageHelper extends SQLiteOpenHelper {
 	public List<TextMessage> withStatus(Context context, char direction, char status){
 		final SQLiteDatabase readableDatabase = getReadableDatabase();
 		final Cursor cursor = readableDatabase.query("messages", TEXT_MESSAGE_COLS,
-				"direction = ? AND status = ?", new String[] { "" + direction, "" + status}, null, null, null, "100");
+				"direction = ? AND status = ?", new String[] { "" + direction, "" + status}, null, null, "id DESC", "100");
+				
+		return listFromCursor(cursor);
+	}
+	
+	public List<TextMessage> erroredOutgoing(Context context){
+		final SQLiteDatabase readableDatabase = getReadableDatabase();
+		final Cursor cursor = readableDatabase.query("messages", TEXT_MESSAGE_COLS,
+				"direction = 'O' AND status = 'E'", null, null, null, "id DESC", "100");
 				
 		return listFromCursor(cursor);
 	}
@@ -95,7 +108,7 @@ public class TextMessageHelper extends SQLiteOpenHelper {
 		final SQLiteDatabase readableDatabase = getReadableDatabase();
 		
 		final Cursor cursor = readableDatabase.query("messages", TEXT_MESSAGE_COLS,
-				"serverId = ?", new String[] { serverId.toString() }, null, null, null, null);
+				"serverId = ?", new String[] { serverId.toString() }, null, null, "id DESC", null);
 		
 		return firstFromCursor(cursor);
 	}
