@@ -14,6 +14,12 @@ Things that make it different than other solutions:
 
 This is still pretty early stuff, so any feedback or bug reports much appreciated.
 
+INSTALL
+=======
+
+You can build this yourself if you'd like, you'll need version 3.* of actionbar-sherlock though.  Until we hit the market, I'd recommend using the pre-build APK at: 
+    http://github.com/nyaruka/android-sms-relay/android-sms-relay.apk
+
 TODO
 =====
 
