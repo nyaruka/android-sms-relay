@@ -57,7 +57,7 @@ public class TextMessage {
 		case RECEIVED:
 			return "Received";
 		case HANDLED:
-			return "Handled";
+			return "Complete";
 		case IGNORED:
 			return "Ignored";
 		case QUEUED:

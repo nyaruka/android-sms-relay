@@ -53,30 +53,28 @@ public class RelayService extends Service implements SMSModem.SmsModemListener {
 	}
 
 	/**
-	 * Responsible for checking whether the connection is up.  This is accomplished by trying to 
-	 * get the http://mobile.google.com/ homepage.  If that comes back then it is assumed our
-	 * connection is just fine.  If it does not and we are on WIFI, then we try to switch
-	 * to the mobile network.
+	 * Toggles our connection from WIFI and vice versa.  If it does not and we are on WIFI, then 
+	 * we try to switch to the mobile network.
 	 */
-	public void checkConnection(){
+	public void toggleConnection(){
 		WifiManager wifi = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
 		m_targetWifiState = UNCHANGED;
 		
-		// try to fetch ze googles
-		try{
-			fetchURL("http://www.google.com/");
-			Log.d(TAG, "Wifi test successful, continuing with wifi state: " + wifi.isWifiEnabled());
-		} catch (Throwable t){
-			m_targetWifiState = wifi.isWifiEnabled() ? ON : OFF;
+		m_targetWifiState = wifi.isWifiEnabled() ? ON : OFF;
 			
-			// well that didn't work, let's flip our connection status, that might just help.. we sleep a bit so things can connect
-			boolean newWifiState = !wifi.isWifiEnabled();
-			Log.d(TAG, "Connection test failed, flipping WIFI state to: " + newWifiState);
-			wifi.setWifiEnabled(newWifiState);
-			try{
-				Thread.sleep(15000);
-			} catch (Throwable tt){}
-		}
+		// well that didn't work, let's flip our connection status, that might just help.. we sleep a bit so things can connect
+		boolean newWifiState = !wifi.isWifiEnabled();
+		Log.d(TAG, "Connection test failed, flipping WIFI state to: " + newWifiState);
+		wifi.setWifiEnabled(newWifiState);
+		
+		// sleep 30 seconds to give the network a chance to connect
+		try{
+			Thread.sleep(30000);
+		} catch (Throwable tt){}
+	}
+	
+	public boolean isConnectionToggled(){
+		return m_targetWifiState != UNCHANGED;
 	}
 	
 	/**
@@ -92,6 +90,7 @@ public class RelayService extends Service implements SMSModem.SmsModemListener {
 			Log.d(TAG, "Restoring WIFI to On");
 			wifi.setWifiEnabled(true);
 		}
+		m_targetWifiState = UNCHANGED;
 	}
 	
 	/***
@@ -106,7 +105,7 @@ public class RelayService extends Service implements SMSModem.SmsModemListener {
 		for(TextMessage msg : msgs){
 			msg.status = TextMessage.ERRORED;
 			helper.updateMessage(msg);
-			MainActivity.updateMessage(msg);			
+			MainActivity.getMessageList().updateMessage(msg);			
 		}
 	}
 
@@ -122,7 +121,7 @@ public class RelayService extends Service implements SMSModem.SmsModemListener {
 			msg.status = TextMessage.RECEIVED;
 			helper.updateMessage(msg);
 			
-			MainActivity.updateMessage(msg);
+			MainActivity.getMessageList().updateMessage(msg);
 			
 			count++;
 			if (count >= 5){
@@ -159,7 +158,7 @@ public class RelayService extends Service implements SMSModem.SmsModemListener {
 				Log.d(TAG, "errored " + msg.id + " -- " + msg.text);
 			}
 			helper.updateMessage(msg);
-			MainActivity.updateMessage(msg);
+			MainActivity.getMessageList().updateMessage(msg);
 			
 			count++;
 			if (count >= 5){
@@ -172,7 +171,7 @@ public class RelayService extends Service implements SMSModem.SmsModemListener {
 	/**
 	 * Sends all our pending outgoing messages to our server.
 	 */
-	public void sendPendingMessagesToServer(){
+	public void sendPendingMessagesToServer() throws IOException {
 		List<TextMessage> msgs = null;
 		
 		// first send any that haven't yet been tried
@@ -190,7 +189,7 @@ public class RelayService extends Service implements SMSModem.SmsModemListener {
 		}
 	}
 	
-	public void markDeliveriesOnServer(){
+	public void markDeliveriesOnServer() throws IOException {
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 		String deliveryURL = prefs.getString("delivery_url", null);
 			
@@ -220,7 +219,7 @@ public class RelayService extends Service implements SMSModem.SmsModemListener {
 	 * Sends a message to our server.
 	 * @param msg
 	 */
-	public void sendMessageToServer(TextMessage msg){
+	public void sendMessageToServer(TextMessage msg) throws IOException {
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 		String receiveURL = prefs.getString("receive_url", null);
 		TextMessageHelper helper = getHelper();
@@ -261,18 +260,22 @@ public class RelayService extends Service implements SMSModem.SmsModemListener {
 			}
 			msg.status = TextMessage.HANDLED;
 			msg.error = null;
-			Log.d(TAG, "Msg given to server.");
+			Log.d(TAG, "Msg '" + msg.text + "' handed to server.");
+		} catch (IOException e){
+			msg.error = e.getClass().getSimpleName() + ": " + e.getMessage();
+			msg.status = TextMessage.ERRORED;
+			throw e;
 		} catch (Throwable t) {
 			Log.d(TAG, "Got Error: "+ t.getMessage(), t);
 			msg.error = t.getClass().getSimpleName() + ": " + t.getMessage();
 			msg.status = TextMessage.ERRORED;
-		}        
-		
-		helper.updateMessage(msg);
-		MainActivity.updateMessage(msg);
+		} finally {     
+			helper.updateMessage(msg);
+			MainActivity.getMessageList().updateMessage(msg);
+		}
 	}
 	
-	public void markMessageDelivered(TextMessage msg){
+	public void markMessageDelivered(TextMessage msg) throws IOException {
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 		String deliveryURL = prefs.getString("delivery_url", null);
 		TextMessageHelper helper = getHelper();		
@@ -295,23 +298,27 @@ public class RelayService extends Service implements SMSModem.SmsModemListener {
 				String content = fetchURL(url);
 				msg.status = TextMessage.DONE;
 				msg.error = null;
-				Log.d(TAG, "Msg marked as delivered.");
+				Log.d(TAG, "Msg " + msg.serverId + " marked as delivered.");
+			} catch (IOException e){
+				msg.status = TextMessage.SENT;
+				msg.error = e.getClass().getSimpleName() + ": " + e.getMessage();
+				throw e;
 			} catch (Throwable t) {
 				Log.d(TAG, "Got Error: "+ t.getMessage(), t);
 				msg.status = TextMessage.SENT;
-				msg.error = t.getMessage();
-			}        
+				msg.error = t.getClass().getSimpleName() + ": " + t.getMessage();
+			} finally {
+				helper.updateMessage(msg);
+				MainActivity.getMessageList().updateMessage(msg);						
+			}
 		}
-		
-		helper.updateMessage(msg);
-		MainActivity.updateMessage(msg);		
 	}
 	
 	/**
 	 * Sends a message to our server.
 	 * @param msg
 	 */
-	public void checkOutbox(){
+	public void checkOutbox() throws IOException {
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 		String updateInterval = prefs.getString("update_interval", "30000");
 		long interval = Long.parseLong(updateInterval);
@@ -347,7 +354,7 @@ public class RelayService extends Service implements SMSModem.SmsModemListener {
 						// if this message doesn't already exist
 						TextMessage existing = helper.withServerId(this.getApplicationContext(), serverId);
 						if (existing == null){
-							Log.d(TAG, "Got reply: " + serverId + ": " + message);
+							Log.d(TAG, "New outgoing msg: " + serverId + ": " + message);
 							TextMessage toSend = new TextMessage(number, message, serverId);
 							helper.createMessage(toSend);
 							sendMessage(toSend);
@@ -362,6 +369,8 @@ public class RelayService extends Service implements SMSModem.SmsModemListener {
 				}
 			}
 			Log.d(TAG, "Outbox fetched from server");
+		} catch (IOException e){
+			throw e;
 		} catch (Throwable t) {
 			Log.d(TAG, "Got Error: "+ t.getMessage(), t);
 		}        
@@ -379,7 +388,7 @@ public class RelayService extends Service implements SMSModem.SmsModemListener {
 		} catch (Exception e){
 			msg.status = TextMessage.ERRORED;
 		}
-		MainActivity.updateMessage(msg);
+		MainActivity.getMessageList().updateMessage(msg);
 	}
 	
 	public void onNewSMS(String number, String message) {
@@ -403,7 +412,7 @@ public class RelayService extends Service implements SMSModem.SmsModemListener {
 		helper.createMessage(msg);
 	
 		Log.d(TAG, "=== SMS IN:" + msg.number + ": " + msg.text);
-		MainActivity.updateMessage(msg);
+		MainActivity.getMessageList().updateMessage(msg);
 		
 		kickService();
 	}	
@@ -414,10 +423,11 @@ public class RelayService extends Service implements SMSModem.SmsModemListener {
 		
 		msg = helper.withId(Long.parseLong(token));
 		msg.status = TextMessage.ERRORED;
+		msg.error = "SMS send error";
 		helper.updateMessage(msg);
 		
 		Log.d(TAG, "=== SMS ERROR:" + token + " Details: " + errorDetails);
-		MainActivity.updateMessage(msg);
+		MainActivity.getMessageList().updateMessage(msg);
 	}
 
 	public void onSMSSent(String token) {
@@ -426,10 +436,12 @@ public class RelayService extends Service implements SMSModem.SmsModemListener {
 		
 		msg = helper.withId(Long.parseLong(token));
 		msg.status = TextMessage.SENT;
+		msg.error = "";
 		helper.updateMessage(msg);
 		
 		Log.d(TAG, "=== SMS SENT: " + token);
-		MainActivity.updateMessage(msg);
+		MainActivity.getMessageList().updateMessage(msg);
+		kickService();
 	}
 	
 	public SMSModem modem;

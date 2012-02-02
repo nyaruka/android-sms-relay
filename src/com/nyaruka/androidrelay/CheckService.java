@@ -1,5 +1,7 @@
 package com.nyaruka.androidrelay;
 
+import java.net.SocketException;
+
 import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
@@ -24,53 +26,83 @@ public class CheckService extends WakefulIntentService {
 			return;
 		}
 		
-		try{
-			RelayService relayer = RelayService.get();
-			if (relayer != null){
-				// check our connection
-				relayer.checkConnection();
-				
-				try{
-					relayer.resendErroredSMS();
-				} catch (Throwable t){
-					Log.d(TAG, "Error resending SMSes.", t);
-				}
-				
-				try{
-					relayer.sendPendingMessagesToServer();
-				} catch (Throwable t){
-					Log.d(TAG, "Error resending to server.", t);
-				}
-
-				try{
-					relayer.markDeliveriesOnServer();
-				} catch (Throwable t){
-					Log.d(TAG, "Error marking deliveries on the server", t);
-				}
-				
-				try{
-					relayer.checkOutbox();
-				} catch (Throwable t){
-					Log.d(TAG, "Error checking outbox", t);
-				}
-				
-				try {
-					relayer.trimMessages();					
-				} catch (Throwable t){
-					Log.d(TAG, "Error trimming message", t);
-				}
-				
-				// restore our connection
-				relayer.restoreConnection();
-			} else {
-				Log.d(TAG, "No RelayService started yet.");
-			}
-		} catch (Exception e){
-			Log.d(TAG, "Error running check service.", e);
+		// grab the relayer service, seeing if it started
+		RelayService relayer = RelayService.get();
+		if (relayer == null){
+			Log.d(TAG, "No RelayService started yet, awaiting.");
+			return;
 		}
-		
+
+		try{
+			// do all the work of sending messages and checking for new ones
+			doCheckWork(relayer);
+		} catch (Throwable t){
+			Log.d(TAG, "Error running check service.", t);
+		}
+				
 		// reschedule ourselves
 		schedule(this.getApplicationContext());
+	}
+	
+	protected void doCheckWork(RelayService relayer){
+		try{
+			relayer.resendErroredSMS();
+		} catch (Throwable t){
+			Log.d(TAG, "Error resending SMSes.", t);
+		}
+				
+		try{
+			relayer.sendPendingMessagesToServer();
+		} catch (Throwable t){
+			try{
+				Log.d(TAG, "Error resending to server, toggling connection", t);
+				relayer.toggleConnection();
+				relayer.sendPendingMessagesToServer();
+			} catch (Throwable tt){
+				Log.d(TAG, "Error sending messages to server", t);
+			}
+		}
+
+		try{
+			relayer.markDeliveriesOnServer();
+		} catch (Throwable t){
+			if (!relayer.isConnectionToggled()){
+				try{
+					Log.d(TAG, "Error marking deliveries on the server, toggling connection", t);
+					relayer.toggleConnection();
+					relayer.sendPendingMessagesToServer();
+				} catch (Throwable tt){
+					Log.d(TAG, "Error marking deliveries on the server", t);
+				}
+			} else {
+				Log.d(TAG, "Error marking deliveries on the server", t);
+			}
+		}
+				
+		try{
+			relayer.checkOutbox();
+		} catch (Throwable t){
+			if (!relayer.isConnectionToggled()){
+				try{
+					Log.d(TAG, "Error checking outbox, toggling connection", t);
+					relayer.toggleConnection();
+					relayer.sendPendingMessagesToServer();
+				} catch (Throwable tt){
+					Log.d(TAG, "Error checking outbox", t);
+				}
+			} else {
+				Log.d(TAG, "Error checking outbox", t);
+			}
+		}
+				
+		try {
+			relayer.trimMessages();					
+		} catch (Throwable t){
+			Log.d(TAG, "Error trimming message", t);
+		}
+				
+		// restore our connection
+		relayer.restoreConnection();
 	}
 
 	public static void schedule(Context context){

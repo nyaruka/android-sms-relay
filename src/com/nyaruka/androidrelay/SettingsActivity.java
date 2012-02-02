@@ -2,6 +2,7 @@ package com.nyaruka.androidrelay;
 
 import java.net.URLEncoder;
 
+import com.actionbarsherlock.R;
 import com.commonsware.cwac.wakeful.WakefulIntentService;
 
 import android.app.AlertDialog;
@@ -12,14 +13,14 @@ import android.content.DialogInterface.OnClickListener;
 import android.content.SharedPreferences.Editor;
 import android.os.Bundle;
 import android.preference.Preference;
+import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
 import android.preference.Preference.OnPreferenceClickListener;
 import android.preference.Preference.OnPreferenceChangeListener;
-import android.preference.PreferenceActivity;
 import android.util.Log;
 import android.widget.Toast;
 
-public class PreferencesActivity extends PreferenceActivity {
+public class SettingsActivity extends PreferenceActivity {
 	public static final String TAG = CheckService.class.getSimpleName();
 	
     @Override
@@ -32,13 +33,13 @@ public class PreferencesActivity extends PreferenceActivity {
         clearMessages.setOnPreferenceClickListener(new OnPreferenceClickListener() {
                 public boolean onPreferenceClick(Preference preference) {
                 // show a confirmation dialog
-                        new AlertDialog.Builder(PreferencesActivity.this)
+                        new AlertDialog.Builder(SettingsActivity.this)
                         .setTitle("WARNING")
                         .setMessage("This will remove all messages, including ones not yet sent to the server or mobile phones.\n\nThis operation cannot be undone.")
                         .setPositiveButton("Reset", new OnClickListener() {
                                         public void onClick(DialogInterface dialog, int which) {
-                                        	AndroidRelay.clearMessages(PreferencesActivity.this.getApplicationContext());
-                                            Toast.makeText(getBaseContext(), "Messages cleared", Toast.LENGTH_LONG).show();
+                                        	AndroidRelay.clearMessages(SettingsActivity.this);
+                                            Toast.makeText(SettingsActivity.this, "Messages cleared", Toast.LENGTH_LONG).show();
                                         }})
                         .setNegativeButton(android.R.string.cancel, null)
                         .show(); 
@@ -49,7 +50,7 @@ public class PreferencesActivity extends PreferenceActivity {
         Preference updateInterval = (Preference) findPreference("update_interval");
         updateInterval.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
 			public boolean onPreferenceChange(Preference preference, Object newValue) {
-				WakefulIntentService.scheduleAlarms(new com.nyaruka.androidrelay.AlarmListener(Long.parseLong(newValue.toString())), PreferencesActivity.this.getApplicationContext());
+				WakefulIntentService.scheduleAlarms(new com.nyaruka.androidrelay.AlarmListener(Long.parseLong(newValue.toString())), SettingsActivity.this);
 				Log.d(TAG, "Rescheduling alarms based on new update_interval value: " + newValue);
 				return true;
 			}
@@ -59,10 +60,10 @@ public class PreferencesActivity extends PreferenceActivity {
         setRapidHost.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
 			public boolean onPreferenceChange(Preference preference, Object newValue) {
 				String hostname = newValue.toString();
-				SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+				SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(SettingsActivity.this);
 				String backend = prefs.getString("rapidsms_backend", "android");
 				String password = prefs.getString("rapidsms_password", null);
-				PreferencesActivity.this.updateEndpoints(hostname, backend, password);
+				updateEndpoints(hostname, backend, password);
 				return true;
 			}        
         });
@@ -71,10 +72,10 @@ public class PreferencesActivity extends PreferenceActivity {
         setRapidBackend.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
 			public boolean onPreferenceChange(Preference preference, Object newValue) {
 				String backend = newValue.toString();
-				SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+				SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(SettingsActivity.this);
 				String hostname = prefs.getString("rapidsms_hostname", null);
 				String password = prefs.getString("rapidsms_password", null);
-				PreferencesActivity.this.updateEndpoints(hostname, backend, password);
+				updateEndpoints(hostname, backend, password);
 				return true;
 			}        
         });
@@ -83,10 +84,10 @@ public class PreferencesActivity extends PreferenceActivity {
         setRapidPassword.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
 			public boolean onPreferenceChange(Preference preference, Object newValue) {
 				String password = newValue.toString();
-				SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+				SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(SettingsActivity.this);
 				String backend = prefs.getString("rapidsms_backend", "android");
 				String hostname = prefs.getString("rapidsms_hostname", null);
-				PreferencesActivity.this.updateEndpoints(hostname, backend, password);
+				updateEndpoints(hostname, backend, password);
 				return true;
 			}        
         });
@@ -96,7 +97,7 @@ public class PreferencesActivity extends PreferenceActivity {
 		Editor editor = findPreference("receive_url").getEditor();
 		
 		if (hostname == null){
-			Toast.makeText(getBaseContext(), "Please set Hostname", Toast.LENGTH_LONG).show();
+			Toast.makeText(SettingsActivity.this, "Please set Hostname", Toast.LENGTH_LONG).show();
 			return;
 		}
 		
@@ -119,8 +120,7 @@ public class PreferencesActivity extends PreferenceActivity {
 		editor.putString("delivery_url", deliveryURL);
 		editor.commit();
 
-		Toast.makeText(getBaseContext(), "RapidSMS Endpoints Set", Toast.LENGTH_LONG).show();
-		
-		PreferencesActivity.this.finish();    	
+		Toast.makeText(SettingsActivity.this, "RapidSMS Endpoints Set", Toast.LENGTH_LONG).show();
+		SettingsActivity.this.finish();
     }
 }

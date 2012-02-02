@@ -9,20 +9,29 @@ Things that make it different than other solutions:
 
 * we are backed by a database for persistence, we think that makes it less likely a message will be dropped in the case of power outages, reboots, or other issues
 * we have a prettier message UI than the other guys
+* we will toggle Wifi on or off in the case of network errors.. this can be useful in places where WiFi is not reliable as the phone will then back down to GSM when it is acting up (and automatically switch back to WiFi when it starts working again)
 * easy integration with our RapidSMS httprouter module. (http://github.com/nyaruka/rapidsms-httprouter)
 
-This is our first release, so there's still a lot we still have in store.  Pull requests happily accepted.
+This is still pretty early stuff, so any feedback or bug reports much appreciated.
 
 TODO
 =====
 
 * Allow user to configure a regex for which messages to handle (ie, only those starting with a particular keyword)
 * Allow configuration of the handset via a file attachment, could make client configuration easier
-* Lots of reliability / paranoia updates to make sure a message never gets lost
-* Better icons / assets, less Nyaruka
+* Even more reliability / paranoia updates to make sure a message never gets lost
+* Remove messages from the SMS inbox
+* Tweak the first use experience to be a lot nicer
 
 CHANGELOG
 ==========
+
+0.0.3
+------
+* switch to use ActionBar Sherlock so we can have a consistent 4.0+ look to the app.  Doesn't look uber pretty on 2.3 devices, but it is ok and much better than Nyaruka banner
+* new silly icon, better than Nyaruka icon
+* tweak the WiFi/GSM backdown so that it'll work when the phone is tethering to a local IP.  We used to check against Google.com, now we strictly start toggling based on IOExceptions to our endpoints.  So it'll work in an isolated environment still. (todo, make this configurable?)
+* kick the sync service when we get SENT notifications, causing the server to be up to date more quickly
 
 0.0.2
 -------
