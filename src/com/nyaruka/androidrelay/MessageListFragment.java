@@ -12,6 +12,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.support.v4.app.ListFragment;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -29,6 +30,18 @@ public class MessageListFragment extends ListFragment {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+	}
+	
+	@Override
+	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle bundle){
+		View view = inflater.inflate(R.layout.message_list, container);
+		
+		TelephonyManager tManager =(TelephonyManager) getActivity().getSystemService(Context.TELEPHONY_SERVICE);
+		
+		TextView tv = (TextView) view.findViewById(R.id.phone_number);
+		tv.setText(tManager.getLine1Number());
+		
+		return view;
 	}
 	
 	@Override

@@ -22,18 +22,19 @@ public class AlarmListener implements WakefulIntentService.AlarmListener {
 	}
 	
 	public long getMaxAge() {
-		// should never be more than one hour
 		return AlarmManager.INTERVAL_HOUR;
 	}
 
 	public void scheduleAlarms(AlarmManager mgr, PendingIntent pi, Context ctxt) {
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(ctxt);
+		boolean process = prefs.getBoolean("process_incoming", false) || prefs.getBoolean("process_outgoing", false);
+		
 		if (m_interval == 0){
-			SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(ctxt);
 			String updateInterval = prefs.getString("update_interval", "" + FREQUENCY);
 			m_interval = Long.parseLong(updateInterval);
 		}
 			
-		if (m_interval > 0){
+		if (m_interval > 0 && process){
 			mgr.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + m_interval, pi);
 		}
 	}

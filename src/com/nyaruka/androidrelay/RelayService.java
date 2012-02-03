@@ -222,6 +222,7 @@ public class RelayService extends Service implements SMSModem.SmsModemListener {
 	public void sendMessageToServer(TextMessage msg) throws IOException {
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 		String receiveURL = prefs.getString("receive_url", null);
+		boolean process_outgoing = prefs.getBoolean("process_outgoing", false);
 		TextMessageHelper helper = getHelper();
 		
 		Log.d(TAG, "Receive URL: " + receiveURL);
@@ -239,21 +240,25 @@ public class RelayService extends Service implements SMSModem.SmsModemListener {
 			
 			if (content.trim().length() > 0){
 				JSONObject json = new JSONObject(content);
-				JSONArray responses = json.getJSONArray("responses");
-				for (int i=0; i<responses.length(); i++) {
-					JSONObject response = responses.getJSONObject(i);
-					String number = "+" + response.getString("contact");
-					String message = response.getString("text");					
-					long serverId = response.getLong("id");
+				
+				// if we are supposed to process outgoing messages, then read any responses
+				if (process_outgoing){
+					JSONArray responses = json.getJSONArray("responses");
+					for (int i=0; i<responses.length(); i++) {
+						JSONObject response = responses.getJSONObject(i);
+						String number = "+" + response.getString("contact");
+						String message = response.getString("text");					
+						long serverId = response.getLong("id");
 
-					if ("O".equals(response.getString("direction"))	&& "Q".equals(response.getString("status"))) {					
-						// if this message doesn't already exist
-						TextMessage existing = helper.withServerId(this.getApplicationContext(), serverId);
-						if (existing == null){
-							Log.d(TAG, "Got reply: " + serverId + ": " + message);
-							TextMessage toSend = new TextMessage(number, message, serverId);
-							helper.createMessage(toSend);
-							sendMessage(toSend);
+						if ("O".equals(response.getString("direction"))	&& "Q".equals(response.getString("status"))) {					
+							// if this message doesn't already exist
+							TextMessage existing = helper.withServerId(this.getApplicationContext(), serverId);
+							if (existing == null){
+								Log.d(TAG, "Got reply: " + serverId + ": " + message);
+								TextMessage toSend = new TextMessage(number, message, serverId);
+								helper.createMessage(toSend);
+								sendMessage(toSend);
+							}
 						}
 					}
 				}
@@ -393,7 +398,7 @@ public class RelayService extends Service implements SMSModem.SmsModemListener {
 	
 	public void onNewSMS(String number, String message) {
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-		boolean process_messages = prefs.getBoolean("process_messages", false);
+		boolean process_messages = prefs.getBoolean("process_incoming", false);
 		
 		// if we aren't supposed to process messages, ignore this message
 		if (!process_messages){

@@ -6,16 +6,18 @@
         android:title="Relay Preferences" android:key="main">
         
         <CheckBoxPreference 
-            android:defaultValue="false" android:summary="Whether to process incoming SMS messages" android:key="process_messages" android:title="Process Messages"/>
+            android:defaultValue="false" android:summary="Whether to process incoming SMS messages" android:key="process_incoming" android:title="Process Incoming"/>
+        
+        <CheckBoxPreference 
+            android:defaultValue="false" android:summary="Whether to process outgoing messages from the server" android:key="process_outgoing" android:title="Process Outgoing"/>
         
         <ListPreference 
             android:key="update_interval"
             android:title="Update Interval"
-            android:defaultValue="1000" 
+            android:defaultValue="15000" 
             android:entries="@array/updateInterval"
             android:entryValues="@array/updateIntervalValues"
-            android:dependency="process_messages"
-        android:summary="Define how often the server will be checked for outgoing messages"/>    
+        	android:summary="Define how long we will wait before resending errored messages and checking the server for new ones"/>    
             
     </PreferenceCategory>
 

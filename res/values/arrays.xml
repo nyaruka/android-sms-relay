@@ -10,7 +10,6 @@
         <item name="900000">Every 15 minutes</item>
         <item name="1800000">Every 30 minutes</item>
         <item name="3600000">Every hour</item>
-        <item name="-1">Never</item>        
     </string-array>
     
     <string-array name="updateIntervalValues">
@@ -18,10 +17,9 @@
         <item name="30000">30000</item>
         <item name="60000">60000</item>
         <item name="300000">300000</item>
-        <item name="900000">300000</item>
-        <item name="1800000">300000</item>
-        <item name="3600000">300000</item>
-        <item name="-1">-1</item>
+        <item name="900000">900000</item>
+        <item name="1800000">1800000</item>
+        <item name="3600000">3600000</item>
     </string-array>
 
 </resources>

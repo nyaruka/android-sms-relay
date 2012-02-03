@@ -32,6 +32,12 @@ TODO
 CHANGELOG
 ==========
 
+0.0.4
+-----
+* add an empty view when first entering the app, slightly prettier
+* allow separately toggling whether any outgoing messages from the server will be processed
+* fix a bug where refresh intervals > 30 mins wheren't taking effect
+
 0.0.3
 ------
 * switch to use ActionBar Sherlock so we can have a consistent 4.0+ look to the app.  Doesn't look uber pretty on 2.3 devices, but it is ok and much better than Nyaruka banner

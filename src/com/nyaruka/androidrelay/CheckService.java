@@ -4,6 +4,8 @@ import java.net.SocketException;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
 import android.util.Log;
 
 import com.commonsware.cwac.wakeful.WakefulIntentService;
@@ -45,21 +47,29 @@ public class CheckService extends WakefulIntentService {
 	}
 	
 	protected void doCheckWork(RelayService relayer){
-		try{
-			relayer.resendErroredSMS();
-		} catch (Throwable t){
-			Log.d(TAG, "Error resending SMSes.", t);
-		}
-				
-		try{
-			relayer.sendPendingMessagesToServer();
-		} catch (Throwable t){
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+		boolean process_incoming = prefs.getBoolean("process_incoming", false);
+		boolean process_outgoing = prefs.getBoolean("process_outgoing", false);
+
+		if (process_outgoing){
 			try{
-				Log.d(TAG, "Error resending to server, toggling connection", t);
-				relayer.toggleConnection();
+				relayer.resendErroredSMS();
+			} catch (Throwable t){
+				Log.d(TAG, "Error resending SMSes.", t);
+			}
+		}
+		
+		if (process_incoming){
+			try{
 				relayer.sendPendingMessagesToServer();
-			} catch (Throwable tt){
-				Log.d(TAG, "Error sending messages to server", t);
+			} catch (Throwable t){
+				try{
+					Log.d(TAG, "Error resending to server, toggling connection", t);
+					relayer.toggleConnection();
+					relayer.sendPendingMessagesToServer();
+				} catch (Throwable tt){
+					Log.d(TAG, "Error sending messages to server", t);
+				}
 			}
 		}
 
@@ -78,20 +88,22 @@ public class CheckService extends WakefulIntentService {
 				Log.d(TAG, "Error marking deliveries on the server", t);
 			}
 		}
-				
-		try{
-			relayer.checkOutbox();
-		} catch (Throwable t){
-			if (!relayer.isConnectionToggled()){
-				try{
-					Log.d(TAG, "Error checking outbox, toggling connection", t);
-					relayer.toggleConnection();
-					relayer.sendPendingMessagesToServer();
-				} catch (Throwable tt){
+		
+		if (process_outgoing){
+			try{
+				relayer.checkOutbox();
+			} catch (Throwable t){
+				if (!relayer.isConnectionToggled()){
+					try{
+						Log.d(TAG, "Error checking outbox, toggling connection", t);
+						relayer.toggleConnection();
+						relayer.sendPendingMessagesToServer();
+					} catch (Throwable tt){
+						Log.d(TAG, "Error checking outbox", t);
+					}
+				} else {
 					Log.d(TAG, "Error checking outbox", t);
 				}
-			} else {
-				Log.d(TAG, "Error checking outbox", t);
 			}
 		}
 				

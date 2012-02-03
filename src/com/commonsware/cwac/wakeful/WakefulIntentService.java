@@ -55,8 +55,8 @@ abstract public class WakefulIntentService extends IntentService {
   }
   
   public static void scheduleAlarms(AlarmListener listener, Context ctxt, boolean force) {
-    SharedPreferences prefs=ctxt.getSharedPreferences(NAME, 0);
-    long lastAlarm=prefs.getLong(LAST_ALARM, 0);
+    SharedPreferences prefs = ctxt.getSharedPreferences(NAME, 0);
+    long lastAlarm = prefs.getLong(LAST_ALARM, 0);
     
     if (lastAlarm==0 || force ||
         (System.currentTimeMillis()>lastAlarm &&
