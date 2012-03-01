@@ -44,9 +44,7 @@ public class MainActivity extends FragmentActivity {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		
 		setContentView(R.layout.main);
-				
 		s_this = this;
 	}
 
@@ -78,8 +76,18 @@ public class MainActivity extends FragmentActivity {
 	}
 	*/
 	
+	public static boolean alive(){
+		return s_this != null;
+	}
+	
 	public static MessageListFragment getMessageList(){
 		return (MessageListFragment) s_this.getSupportFragmentManager().findFragmentById(R.id.message_list);
+	}
+	
+	public static void updateMessage(TextMessage message){
+		if (alive()){
+			getMessageList().updateMessage(message);
+		}
 	}
 	
 	public boolean onOptionsItemSelected(MenuItem item) {

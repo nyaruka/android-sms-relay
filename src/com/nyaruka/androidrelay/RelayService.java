@@ -105,7 +105,7 @@ public class RelayService extends Service implements SMSModem.SmsModemListener {
 		for(TextMessage msg : msgs){
 			msg.status = TextMessage.ERRORED;
 			helper.updateMessage(msg);
-			MainActivity.getMessageList().updateMessage(msg);			
+			MainActivity.updateMessage(msg);			
 		}
 	}
 
@@ -121,7 +121,7 @@ public class RelayService extends Service implements SMSModem.SmsModemListener {
 			msg.status = TextMessage.RECEIVED;
 			helper.updateMessage(msg);
 			
-			MainActivity.getMessageList().updateMessage(msg);
+			MainActivity.updateMessage(msg);
 			
 			count++;
 			if (count >= 5){
@@ -158,7 +158,7 @@ public class RelayService extends Service implements SMSModem.SmsModemListener {
 				Log.d(TAG, "errored " + msg.id + " -- " + msg.text);
 			}
 			helper.updateMessage(msg);
-			MainActivity.getMessageList().updateMessage(msg);
+			MainActivity.updateMessage(msg);
 			
 			count++;
 			if (count >= 5){
@@ -276,7 +276,7 @@ public class RelayService extends Service implements SMSModem.SmsModemListener {
 			msg.status = TextMessage.ERRORED;
 		} finally {     
 			helper.updateMessage(msg);
-			MainActivity.getMessageList().updateMessage(msg);
+			MainActivity.updateMessage(msg);
 		}
 	}
 	
@@ -314,7 +314,7 @@ public class RelayService extends Service implements SMSModem.SmsModemListener {
 				msg.error = t.getClass().getSimpleName() + ": " + t.getMessage();
 			} finally {
 				helper.updateMessage(msg);
-				MainActivity.getMessageList().updateMessage(msg);						
+				MainActivity.updateMessage(msg);
 			}
 		}
 	}
@@ -393,7 +393,7 @@ public class RelayService extends Service implements SMSModem.SmsModemListener {
 		} catch (Exception e){
 			msg.status = TextMessage.ERRORED;
 		}
-		MainActivity.getMessageList().updateMessage(msg);
+		MainActivity.updateMessage(msg);
 	}
 	
 	public void onNewSMS(String number, String message) {
@@ -417,7 +417,7 @@ public class RelayService extends Service implements SMSModem.SmsModemListener {
 		helper.createMessage(msg);
 	
 		Log.d(TAG, "=== SMS IN:" + msg.number + ": " + msg.text);
-		MainActivity.getMessageList().updateMessage(msg);
+		MainActivity.updateMessage(msg);
 		
 		kickService();
 	}	
@@ -432,7 +432,7 @@ public class RelayService extends Service implements SMSModem.SmsModemListener {
 		helper.updateMessage(msg);
 		
 		Log.d(TAG, "=== SMS ERROR:" + token + " Details: " + errorDetails);
-		MainActivity.getMessageList().updateMessage(msg);
+		MainActivity.updateMessage(msg);
 	}
 
 	public void onSMSSent(String token) {
@@ -445,7 +445,7 @@ public class RelayService extends Service implements SMSModem.SmsModemListener {
 		helper.updateMessage(msg);
 		
 		Log.d(TAG, "=== SMS SENT: " + token);
-		MainActivity.getMessageList().updateMessage(msg);
+		MainActivity.updateMessage(msg);
 		kickService();
 	}
 	
