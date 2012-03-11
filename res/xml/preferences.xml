@@ -41,6 +41,7 @@
 
     <PreferenceCategory android:title="Advanced">
         <Preference android:title="Clear Messages" android:summary="Clears all messages in our local database" android:key="clear_messages"/>
+        <Preference android:title="Send Debug Log" android:summary="Send a debug log to Nyaruka" android:key="send_log"/>
     </PreferenceCategory>
     
     

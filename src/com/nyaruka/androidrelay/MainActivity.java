@@ -1,34 +1,11 @@
 package com.nyaruka.androidrelay;
 
-import java.util.List;
-
-import java.util.Vector;
-
-import android.app.ListActivity;
-import android.content.Context;
 import android.content.Intent;
-import android.graphics.Color;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.support.v4.app.FragmentActivity;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.Menu;
 import android.support.v4.view.MenuItem;
-import android.util.Log;
-import android.view.ContextMenu;
-import android.view.LayoutInflater;
 import android.view.MenuInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.view.Window;
-import android.view.ContextMenu.ContextMenuInfo;
-import android.widget.AdapterView.OnItemClickListener;
-import android.widget.ArrayAdapter;
-import android.widget.ListView;
-import android.widget.TextView;
-import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.Toast;
 
 import com.actionbarsherlock.R;
@@ -38,6 +15,7 @@ import com.nyaruka.androidrelay.data.TextMessage;
 public class MainActivity extends FragmentActivity {
 
 	public static final String TAG = "FragmentActivity";
+    public final static String LINE_SEPARATOR = System.getProperty("line.separator");//$NON-NLS-1$
 	
 	private static MainActivity s_this;
 	

@@ -14,7 +14,7 @@
   limitations under the License.
   -->
 
-<resources>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <string name="app_name">SMS Relay</string>
     <string name="alternate_title">An alternate title that is long</string>
     <string name="toggle_title">Toggle title</string>
@@ -22,4 +22,20 @@
     <string name="menu_refresh">Refresh</string>
     <string name="menu_search">Search</string>
     <string name="menu_share">Share</string>
+    
+    <string name="message_subject">Android device log</string>
+    <string name="acquiring_log_progress_dialog_message">Acquiring log from the system..</string>
+    <string name="chooser_title">"Select an application to send the log"</string>
+    <string name="failed_to_get_log_message">"Failed to get the log from the system."</string>
+    <string name="main_dialog_text">"This application will attempt to collect the device log.
+The collected log will be sent using an application of your choice.
+You also will have an opportunity to see and modify the data being sent."
+    </string>
+    <string name="device_info_fmt">
+Log Collector version: <xliff:g id="application_version">%s</xliff:g>\n
+Device model: <xliff:g id="device_model">%s</xliff:g>\n
+Firmware version: <xliff:g id="firmware_revision">%s</xliff:g>\n
+Kernel version: <xliff:g id="kernel_version">%s</xliff:g>\n
+Build number: <xliff:g id="build_number">%s</xliff:g>\n
+    </string>    
 </resources>

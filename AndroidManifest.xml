@@ -15,6 +15,7 @@
   <uses-permission android:name="android.permission.READ_PHONE_STATE" />
   <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
   <uses-permission android:name="android.permission.CHANGE_WIFI_STATE"/>
+  <uses-permission android:name="android.permission.READ_LOGS" />
   
   <uses-sdk android:minSdkVersion="8" android:targetSdkVersion="13" />
   
@@ -61,6 +62,15 @@
     <activity android:name=".SettingsActivity"
  	      android:launchMode="singleInstance">        
     </activity>        
+    
+     <activity android:name="com.nyaruka.log.SendLogActivity"
+                  android:label="@string/app_name"
+                  android:theme="@android:style/Theme.Translucent.NoTitleBar">
+            <intent-filter>
+                <action android:name="com.nyaruka.log.SEND_LOG" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+	</activity>
     
     <activity android:name=".LogViewer"/>
     
