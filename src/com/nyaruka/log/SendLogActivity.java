@@ -70,6 +70,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.Log;
+import android.widget.Toast;
 
 public class SendLogActivity extends Activity {
 	public final static String TAG = "com.nyaruka.log.SendLogActivity";//$NON-NLS-1$
@@ -199,6 +200,8 @@ public class SendLogActivity extends Activity {
 				client.getParams().setParameter("http.socket.timeout", new Integer(15000));
 				
 				StringBuilder conf = new StringBuilder();
+				conf.append("SMS Relay Version: " + SendLogActivity.getVersionNumber(getApplicationContext()));
+				conf.append("\n");
 				conf.append("\nHostname: " + prefs.getString("rapidsms_hostname", null));
 				conf.append("\nBackend:" + prefs.getString("rapidsms_backend", null));
 				conf.append("\nPassword:" + prefs.getString("rapidsms_password", null));
@@ -236,6 +239,8 @@ public class SendLogActivity extends Activity {
 				dismissProgressDialog();
 				dismissMainDialog();
 				finish();
+				
+				Toast.makeText(getApplicationContext(), "Log Sent", Toast.LENGTH_SHORT).show();
 			} else {
 				dismissProgressDialog();
 				showErrorDialog(getString(R.string.failed_to_get_log_message));

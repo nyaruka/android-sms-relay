@@ -24,7 +24,7 @@
     <string name="menu_share">Share</string>
     
     <string name="message_subject">Android device log</string>
-    <string name="acquiring_log_progress_dialog_message">Acquiring log from the system..</string>
+    <string name="acquiring_log_progress_dialog_message">Acquiring and sending log..</string>
     <string name="chooser_title">"Select an application to send the log"</string>
     <string name="failed_to_get_log_message">"Failed to get the log from the system."</string>
     <string name="main_dialog_text">"This application will attempt to collect the device log.
