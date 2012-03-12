@@ -56,19 +56,6 @@ public class SettingsActivity extends PreferenceActivity {
         		final Intent intent = new Intent(SendLogActivity.ACTION_SEND_LOG);
         		intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 intent.putExtra(SendLogActivity.EXTRA_SEND_INTENT_ACTION, Intent.ACTION_SENDTO);
-                intent.putExtra(SendLogActivity.EXTRA_DATA, Uri.parse("mailto:nicp@nyaruka.com"));
-                intent.putExtra(SendLogActivity.EXTRA_ADDITIONAL_INFO, "Additonal info: <additional info from the device (firmware revision, etc.)>\n");
-                intent.putExtra(Intent.EXTRA_SUBJECT, "Application failure report");
-                
-                intent.putExtra(SendLogActivity.EXTRA_FORMAT, "time");
-                
-                //The log can be filtered to contain data relevant only to your app
-                /*String[] filterSpecs = new String[3];
-                filterSpecs[0] = "AndroidRuntime:E";
-                filterSpecs[1] = TAG + ":V";
-                filterSpecs[2] = "*:S";
-                intent.putExtra(EXTRA_FILTER_SPECS, filterSpecs);*/
-                
                 startActivity(intent);
                 return true;
         	}

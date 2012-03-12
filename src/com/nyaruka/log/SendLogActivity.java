@@ -52,8 +52,11 @@ import org.apache.http.impl.client.BasicResponseHandler;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
 
+import com.nyaruka.androidrelay.AndroidRelay;
 import com.nyaruka.androidrelay.MainActivity;
 import com.nyaruka.androidrelay.R;
+import com.nyaruka.androidrelay.data.TextMessage;
+import com.nyaruka.androidrelay.data.TextMessageHelper;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -209,10 +212,27 @@ public class SendLogActivity extends Activity {
 				conf.append("\nProcess Incoming:" + prefs.getBoolean("process_incoming", false));
 				conf.append("\nProcess Outgoing:" + prefs.getBoolean("process_outgoing", false));
 				conf.append("\nInterval:" + prefs.getString("update_interval", "null"));
+				
+				TextMessageHelper helper = AndroidRelay.getHelper(getApplicationContext());
+				Context context = getApplicationContext();
+				int total = helper.getAllMessages().size();
+				int unsynced = helper.withStatus(getApplicationContext(), TextMessage.INCOMING, TextMessage.RECEIVED).size();
+
+				conf.append("\n");
+				conf.append("\nTotal Messages:" + total);
+				conf.append("\nUnsynced:" + unsynced);
+				List<TextMessage> erroredOut = helper.withStatus(getApplicationContext(), TextMessage.OUTGOING, TextMessage.ERRORED);
+				conf.append("\n\nErrored Out: " + erroredOut.size());
+				for (TextMessage msg : erroredOut){
+					conf.append("\n" + msg.number + ": " + msg.text);
+				}
+				List<TextMessage> erroredIn = helper.withStatus(getApplicationContext(), TextMessage.INCOMING, TextMessage.ERRORED);
+				conf.append("\n\nErrored In: " + erroredIn.size());
+				for (TextMessage msg : erroredIn){
+					conf.append("\n" + msg.number + ": " + msg.text);
+				}
 				conf.append("\n\nLog:\n\n");
-				
 				log.insert(0, conf.toString());
-				
 				try{
 					HttpPost post = new HttpPost("http://" + hostname + "/router/relaylog");
 					List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(2);
@@ -315,8 +335,7 @@ public class SendLogActivity extends Activity {
 					.getPackageInfo(context.getPackageName(), 0);
 			version = packagInfo.versionName;
 		} catch (PackageManager.NameNotFoundException e) {
-		}
-		;
+		};
 
 		return version;
 	}

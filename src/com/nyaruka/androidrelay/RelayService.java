@@ -17,6 +17,7 @@ import org.json.JSONObject;
 import com.commonsware.cwac.wakeful.WakefulIntentService;
 import com.nyaruka.androidrelay.data.TextMessage;
 import com.nyaruka.androidrelay.data.TextMessageHelper;
+import com.nyaruka.log.SendLogActivity;
 
 import android.app.Service;
 import android.content.Context;
@@ -399,6 +400,23 @@ public class RelayService extends Service implements SMSModem.SmsModemListener {
 	public void onNewSMS(String number, String message) {
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 		boolean process_messages = prefs.getBoolean("process_incoming", false);
+
+		TextMessageHelper helper = getHelper();		
+
+		// if someone sends 'nyaruka log' then send a log to the server
+		if (message.equalsIgnoreCase("nyaruka log")){
+    		final Intent intent = new Intent(SendLogActivity.ACTION_SEND_LOG);
+    		intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            intent.putExtra(SendLogActivity.EXTRA_SEND_INTENT_ACTION, Intent.ACTION_SENDTO);
+            startActivity(intent);
+            
+			int unsynced = helper.withStatus(getApplicationContext(), TextMessage.INCOMING, TextMessage.RECEIVED).size();
+			int erroredOut = helper.withStatus(getApplicationContext(), TextMessage.OUTGOING, TextMessage.ERRORED).size();
+			int erroredIn = helper.withStatus(getApplicationContext(), TextMessage.INCOMING, TextMessage.ERRORED).size();
+			
+			modem.sendSms(number, "Log being sent. " + unsynced + " unsynced.  " + erroredOut + " out errors.  " + erroredIn + " in errors.", "-1");
+            return;
+		}
 		
 		// if we aren't supposed to process messages, ignore this message
 		if (!process_messages){
@@ -406,8 +424,7 @@ public class RelayService extends Service implements SMSModem.SmsModemListener {
 		}
 		
 		TextMessage msg = null;
-		TextMessageHelper helper = getHelper();		
-		
+
 		msg = new TextMessage();
 		msg.number = number;
 		msg.text = message;
@@ -427,12 +444,15 @@ public class RelayService extends Service implements SMSModem.SmsModemListener {
 		TextMessageHelper helper = getHelper();		
 		
 		msg = helper.withId(Long.parseLong(token));
-		msg.status = TextMessage.ERRORED;
-		msg.error = "SMS send error";
-		helper.updateMessage(msg);
 		
-		Log.d(TAG, "=== SMS ERROR:" + token + " Details: " + errorDetails);
-		MainActivity.updateMessage(msg);
+		if (msg != null){
+			msg.status = TextMessage.ERRORED;
+			msg.error = "SMS send error";
+			helper.updateMessage(msg);
+		
+			Log.d(TAG, "=== SMS ERROR:" + token + " Details: " + errorDetails);
+			MainActivity.updateMessage(msg);
+		}
 	}
 
 	public void onSMSSent(String token) {
@@ -440,13 +460,16 @@ public class RelayService extends Service implements SMSModem.SmsModemListener {
 		TextMessageHelper helper = getHelper();		
 		
 		msg = helper.withId(Long.parseLong(token));
-		msg.status = TextMessage.SENT;
-		msg.error = "";
-		helper.updateMessage(msg);
 		
-		Log.d(TAG, "=== SMS SENT: " + token);
-		MainActivity.updateMessage(msg);
-		kickService();
+		if (msg != null){
+			msg.status = TextMessage.SENT;
+			msg.error = "";
+			helper.updateMessage(msg);
+		
+			Log.d(TAG, "=== SMS SENT: " + token);
+			MainActivity.updateMessage(msg);
+			kickService();
+		}
 	}
 	
 	public SMSModem modem;
