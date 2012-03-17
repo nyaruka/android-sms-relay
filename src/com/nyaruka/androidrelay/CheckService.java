@@ -3,7 +3,10 @@ package com.nyaruka.androidrelay;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.preference.PreferenceManager;
+import android.provider.Settings;
 import android.util.Log;
 
 import com.commonsware.cwac.wakeful.WakefulIntentService;
@@ -13,6 +16,63 @@ public class CheckService extends WakefulIntentService {
 	
 	public CheckService() {
 		super(CheckService.class.getName());
+	}
+
+	/**
+	 * Checks whether we have a mobile network connected.  This hopefully catches the case where the phone
+	 * drops its connection for some reason.
+	 * @param context
+	 * @return
+	 */
+	public boolean isRadioOn(){
+		Context context = getApplicationContext();
+		
+		boolean isOn = false;
+		ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+		NetworkInfo[] networks = cm.getAllNetworkInfo();
+		for(int i=0;i<networks.length;i++){
+			if(networks[i].getType() == ConnectivityManager.TYPE_MOBILE && networks[i].isConnectedOrConnecting()){
+				isOn = true;
+			}	
+		}
+		
+		// if our radio is off, output some debugging
+		if (!isOn){
+			Log.d(TAG, "__RADIO OFF");
+			for(int i=0;i<networks.length;i++){
+				Log.d(TAG, "__ " + networks[i].getTypeName() + "  connection? " + networks[i].isConnectedOrConnecting());
+			}	
+		}
+
+	    return isOn;
+	}
+	
+	public void tickleAirplaneMode(){
+		Context context = getApplicationContext();
+		Settings.System.putInt(context.getContentResolver(), Settings.System.AIRPLANE_MODE_ON, 1);
+
+		// reload our settings to take effect
+		Intent intent = new Intent(Intent.ACTION_AIRPLANE_MODE_CHANGED);
+		intent.putExtra("state", true);
+		sendBroadcast(intent);
+		
+		// sleep 30 seconds for things to take effect
+		try{
+			Thread.sleep(30000);
+		} catch (Throwable t){}
+		
+		// then toggle back
+		Settings.System.putInt(context.getContentResolver(), Settings.System.AIRPLANE_MODE_ON, 0);
+
+		// reload our settings to take effect
+		intent = new Intent(Intent.ACTION_AIRPLANE_MODE_CHANGED);
+		intent.putExtra("state", false);
+		sendBroadcast(intent);
+		
+		// sleep 30 seconds for things to take effect
+		try{
+			Thread.sleep(30000);
+		} catch (Throwable t){}
 	}
 
 	@Override
@@ -25,7 +85,7 @@ public class CheckService extends WakefulIntentService {
 			schedule(this.getApplicationContext());
 			return;
 		}
-		
+
 		// grab the relayer service, seeing if it started
 		RelayService relayer = RelayService.get();
 		if (relayer == null){
@@ -33,6 +93,13 @@ public class CheckService extends WakefulIntentService {
 			return;
 		}
 
+		// if we don't have radio connectivity, we toggle airplane mode
+		if (!isRadioOn()){
+			Log.d(TAG, "__RADIO OFF - tickling airplane mode");
+			tickleAirplaneMode();
+			Log.d(TAG, "__RADIO OFF - done tickling airplane mode");
+		}
+		
 		try{
 			// do all the work of sending messages and checking for new ones
 			doCheckWork(relayer);
@@ -48,7 +115,7 @@ public class CheckService extends WakefulIntentService {
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 		boolean process_incoming = prefs.getBoolean("process_incoming", false);
 		boolean process_outgoing = prefs.getBoolean("process_outgoing", false);
-
+		
 		if (process_outgoing){
 			try{
 				relayer.resendErroredSMS();
@@ -59,6 +126,7 @@ public class CheckService extends WakefulIntentService {
 		
 		if (process_incoming){
 			try{
+				Log.d(TAG, "__ SENDING PENDING MESSAGES");
 				relayer.sendPendingMessagesToServer();
 			} catch (Throwable t){
 				try{
@@ -72,6 +140,7 @@ public class CheckService extends WakefulIntentService {
 		}
 
 		try{
+			Log.d(TAG, "__ MARKING DELIVERIES");
 			relayer.markDeliveriesOnServer();
 		} catch (Throwable t){
 			if (!relayer.isConnectionToggled()){
@@ -89,6 +158,7 @@ public class CheckService extends WakefulIntentService {
 		
 		if (process_outgoing){
 			try{
+				Log.d(TAG, "__ CHECKING OUTBOX");
 				relayer.checkOutbox();
 			} catch (Throwable t){
 				if (!relayer.isConnectionToggled()){
@@ -116,6 +186,7 @@ public class CheckService extends WakefulIntentService {
 	}
 
 	public static void schedule(Context context){
+		Log.d(TAG, "__ SCHEDULING NEXT WAKEUP");
 		WakefulIntentService.scheduleAlarms(new com.nyaruka.androidrelay.AlarmListener(), context);
 	}
 }

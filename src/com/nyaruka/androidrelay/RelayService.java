@@ -7,6 +7,7 @@ import java.util.List;
 
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.HttpResponseException;
 import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.BasicResponseHandler;
@@ -205,9 +206,9 @@ public class RelayService extends Service implements SMSModem.SmsModemListener {
 	
 	public String fetchURL(String url) throws ClientProtocolException, IOException{
 		HttpClient client = new DefaultHttpClient();
-		client.getParams().setParameter("http.connection-manager.timeout", new Integer(15000));
-		client.getParams().setParameter("http.connection.timeout", new Integer(15000));
-		client.getParams().setParameter("http.socket.timeout", new Integer(15000));
+		client.getParams().setParameter("http.connection-manager.timeout", new Integer(25000));
+		client.getParams().setParameter("http.connection.timeout", new Integer(25000));
+		client.getParams().setParameter("http.socket.timeout", new Integer(25000));
 		
 		HttpGet httpget = new HttpGet(url);
 		ResponseHandler<String> responseHandler = new BasicResponseHandler();
@@ -267,6 +268,10 @@ public class RelayService extends Service implements SMSModem.SmsModemListener {
 			msg.status = TextMessage.HANDLED;
 			msg.error = null;
 			Log.d(TAG, "Msg '" + msg.text + "' handed to server.");
+		} catch (HttpResponseException e){
+			Log.d(TAG, "Got Error: "+ e.getMessage(), e);
+			msg.error = e.getClass().getSimpleName() + ": " + e.getMessage();
+			msg.status = TextMessage.ERRORED;			
 		} catch (IOException e){
 			msg.error = e.getClass().getSimpleName() + ": " + e.getMessage();
 			msg.status = TextMessage.ERRORED;
@@ -375,6 +380,8 @@ public class RelayService extends Service implements SMSModem.SmsModemListener {
 				}
 			}
 			Log.d(TAG, "Outbox fetched from server");
+		} catch (HttpResponseException e){
+			Log.d(TAG, "Got Error: "+ e.getMessage(), e);
 		} catch (IOException e){
 			throw e;
 		} catch (Throwable t) {

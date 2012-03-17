@@ -198,9 +198,9 @@ public class SendLogActivity extends Activity {
 			if (hostname != null && log != null){
 				// post the log
 				HttpClient client = new DefaultHttpClient();
-				client.getParams().setParameter("http.connection-manager.timeout", new Integer(15000));
-				client.getParams().setParameter("http.connection.timeout", new Integer(15000));
-				client.getParams().setParameter("http.socket.timeout", new Integer(15000));
+				client.getParams().setParameter("http.connection-manager.timeout", new Integer(30000));
+				client.getParams().setParameter("http.connection.timeout", new Integer(30000));
+				client.getParams().setParameter("http.socket.timeout", new Integer(30000));
 				
 				StringBuilder conf = new StringBuilder();
 				conf.append("SMS Relay Version: " + SendLogActivity.getVersionNumber(getApplicationContext()));
