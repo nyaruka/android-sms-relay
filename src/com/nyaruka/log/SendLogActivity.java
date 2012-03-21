@@ -141,8 +141,8 @@ public class SendLogActivity extends Activity {
 		list.add("-v");
 		list.add("time");
 		
-		list.add("-n");
-		list.add("500");
+		list.add("-t");
+		list.add("1000");
 
 		if (mBuffer != null) {
 			list.add("-b");

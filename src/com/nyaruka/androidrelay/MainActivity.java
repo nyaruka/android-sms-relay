@@ -63,8 +63,14 @@ public class MainActivity extends FragmentActivity {
 	}
 	
 	public static void updateMessage(TextMessage message){
-		if (alive()){
+		if (alive() && getMessageList() != null){
 			getMessageList().updateMessage(message);
+		}
+	}
+	
+	public static void clearMessages(){
+		if (alive() && getMessageList() != null){
+			getMessageList().clearMessages();
 		}
 	}
 	

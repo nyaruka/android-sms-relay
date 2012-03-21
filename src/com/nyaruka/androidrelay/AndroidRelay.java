@@ -17,9 +17,7 @@ public class AndroidRelay extends Application {
     
     public static void clearMessages(Context context){
     	getHelper(context).clearMessages();
-    	if (MainActivity.alive()){
-    		MainActivity.getMessageList().clearMessages();
-    	}
+    	MainActivity.clearMessages();
     }
         
     public static TextMessageHelper getHelper(Context context){
