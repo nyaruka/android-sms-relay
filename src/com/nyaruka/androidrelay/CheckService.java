@@ -94,10 +94,21 @@ public class CheckService extends WakefulIntentService {
 		}
 
 		// if we don't have radio connectivity, we toggle airplane mode
-		if (!isRadioOn()){
-			Log.d(TAG, "__RADIO OFF - tickling airplane mode");
-			tickleAirplaneMode();
-			Log.d(TAG, "__RADIO OFF - done tickling airplane mode");
+		try{
+			if (!isRadioOn()){
+				Log.d(TAG, "__RADIO OFF - tickling airplane mode");
+				tickleAirplaneMode();
+				Log.d(TAG, "__RADIO OFF - done tickling airplane mode");
+			}
+		} catch (Throwable t){
+			Log.d(TAG, "Error thrown checking network connectivity", t);
+		}
+		
+		// check our power levels
+		try{
+			relayer.checkPowerStatus();
+		} catch (Throwable t){
+			Log.d(TAG, "Error thrown checking power status", t);
 		}
 		
 		try{

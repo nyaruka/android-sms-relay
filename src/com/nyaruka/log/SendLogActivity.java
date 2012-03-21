@@ -55,6 +55,7 @@ import org.apache.http.message.BasicNameValuePair;
 import com.nyaruka.androidrelay.AndroidRelay;
 import com.nyaruka.androidrelay.MainActivity;
 import com.nyaruka.androidrelay.R;
+import com.nyaruka.androidrelay.RelayService;
 import com.nyaruka.androidrelay.data.TextMessage;
 import com.nyaruka.androidrelay.data.TextMessageHelper;
 
@@ -191,62 +192,13 @@ public class SendLogActivity extends Activity {
 			} catch (IOException e) {
 				Log.e(MainActivity.TAG, "CollectLogTask.doInBackground failed", e);//$NON-NLS-1$
 			}
-
+			
 			SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 			String hostname = prefs.getString("rapidsms_hostname", null);
 			
 			if (hostname != null && log != null){
-				// post the log
-				HttpClient client = new DefaultHttpClient();
-				client.getParams().setParameter("http.connection-manager.timeout", new Integer(30000));
-				client.getParams().setParameter("http.connection.timeout", new Integer(30000));
-				client.getParams().setParameter("http.socket.timeout", new Integer(30000));
-				
-				StringBuilder conf = new StringBuilder();
-				conf.append("SMS Relay Version: " + SendLogActivity.getVersionNumber(getApplicationContext()));
-				conf.append("\n");
-				conf.append("\nHostname: " + prefs.getString("rapidsms_hostname", null));
-				conf.append("\nBackend:" + prefs.getString("rapidsms_backend", null));
-				conf.append("\nPassword:" + prefs.getString("rapidsms_password", null));
-				conf.append("\n");
-				conf.append("\nProcess Incoming:" + prefs.getBoolean("process_incoming", false));
-				conf.append("\nProcess Outgoing:" + prefs.getBoolean("process_outgoing", false));
-				conf.append("\nInterval:" + prefs.getString("update_interval", "null"));
-				
-				TextMessageHelper helper = AndroidRelay.getHelper(getApplicationContext());
-				Context context = getApplicationContext();
-				int total = helper.getAllMessages().size();
-				int unsynced = helper.withStatus(getApplicationContext(), TextMessage.INCOMING, TextMessage.RECEIVED).size();
-
-				conf.append("\n");
-				conf.append("\nTotal Messages:" + total);
-				conf.append("\nUnsynced:" + unsynced);
-				List<TextMessage> erroredOut = helper.withStatus(getApplicationContext(), TextMessage.OUTGOING, TextMessage.ERRORED);
-				conf.append("\n\nErrored Out: " + erroredOut.size());
-				for (TextMessage msg : erroredOut){
-					conf.append("\n" + msg.number + ": " + msg.text);
-				}
-				List<TextMessage> erroredIn = helper.withStatus(getApplicationContext(), TextMessage.INCOMING, TextMessage.ERRORED);
-				conf.append("\n\nErrored In: " + erroredIn.size());
-				for (TextMessage msg : erroredIn){
-					conf.append("\n" + msg.number + ": " + msg.text);
-				}
-				conf.append("\n\nLog:\n\n");
-				log.insert(0, conf.toString());
-				try{
-					HttpPost post = new HttpPost("http://" + hostname + "/router/relaylog");
-					List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(2);
-					nameValuePairs.add(new BasicNameValuePair("password", "" + prefs.getString("rapidsms_password", null)));
-					nameValuePairs.add(new BasicNameValuePair("log", log.toString()));
-					post.setEntity(new UrlEncodedFormEntity(nameValuePairs));
-					
-					Log.e(MainActivity.TAG, "Sending log to: " + post.getURI().toURL().toString());
-				
-					ResponseHandler<String> responseHandler = new BasicResponseHandler();
-					String content = client.execute(post, responseHandler);
+				if (RelayService.sendAlert(getApplicationContext(), "Android Relay Log", log.toString())){
 					return log;
-				} catch (Throwable t){
-					Log.e(MainActivity.TAG, "CollectLogTask.doInBackground failed", t);//$NON-NLS-1$
 				}
 			}
 			
@@ -326,18 +278,6 @@ public class SendLogActivity extends Activity {
 		dismissMainDialog();
 
 		super.onPause();
-	}
-
-	private static String getVersionNumber(Context context) {
-		String version = "?";
-		try {
-			PackageInfo packagInfo = context.getPackageManager()
-					.getPackageInfo(context.getPackageName(), 0);
-			version = packagInfo.versionName;
-		} catch (PackageManager.NameNotFoundException e) {
-		};
-
-		return version;
 	}
 
 	private String getFormattedKernelVersion() {
