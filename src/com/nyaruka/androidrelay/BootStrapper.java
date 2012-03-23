@@ -16,7 +16,7 @@ import android.util.Log;
  */
 public class BootStrapper extends BroadcastReceiver {
 	
-	public static final String TAG = BootStrapper.class.getSimpleName();
+	public static final String TAG = AndroidRelay.TAG;
 	
 	@Override
 	public void onReceive(Context context, Intent intent){

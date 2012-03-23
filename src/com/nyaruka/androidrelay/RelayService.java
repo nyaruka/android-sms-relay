@@ -39,7 +39,7 @@ import android.util.Log;
 
 public class RelayService extends Service implements SMSModem.SmsModemListener {
 
-	public static final String TAG = RelayService.class.getSimpleName();
+	public static final String TAG = AndroidRelay.TAG;
 	
 	public static RelayService s_this = null;
 	public static RelayService get(){ return s_this; }
@@ -129,9 +129,9 @@ public class RelayService extends Service implements SMSModem.SmsModemListener {
 		if (hostname != null && subject != null){
 			// send the alert off
 			HttpClient client = new DefaultHttpClient();
-			client.getParams().setParameter("http.connection-manager.timeout", new Integer(30000));
-			client.getParams().setParameter("http.connection.timeout", new Integer(30000));
-			client.getParams().setParameter("http.socket.timeout", new Integer(30000));
+			client.getParams().setParameter("http.connection-manager.timeout", new Integer(60000));
+			client.getParams().setParameter("http.connection.timeout", new Integer(60000));
+			client.getParams().setParameter("http.socket.timeout", new Integer(60000));
 			
 			StringBuilder conf = new StringBuilder();
 			conf.append("SMS Relay Version: " + AndroidRelay.getVersionNumber(context));
@@ -286,12 +286,12 @@ public class RelayService extends Service implements SMSModem.SmsModemListener {
 		int count = 0;
 		for(TextMessage msg : msgs){
 			try{
+				Log.d(TAG, "Sending [" + msg.id + "] - " + msg.number + " - "+ msg.text);
 				modem.sendSms(msg.number, msg.text, "" + msg.id);
 				msg.status = TextMessage.QUEUED;
-				Log.d(TAG, "resent " + msg.id + " -- " + msg.text);
 			} catch (Throwable t){
 				msg.status = TextMessage.ERRORED;
-				Log.d(TAG, "errored " + msg.id + " -- " + msg.text);
+				Log.d(TAG, "Errored [" + msg.id + "] - " + msg.number + " - "+ msg.text, t);
 			}
 			helper.updateMessage(msg);
 			MainActivity.updateMessage(msg);

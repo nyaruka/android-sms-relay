@@ -77,7 +77,7 @@ import android.util.Log;
 import android.widget.Toast;
 
 public class SendLogActivity extends Activity {
-	public final static String TAG = "com.nyaruka.log.SendLogActivity";//$NON-NLS-1$
+	public final static String TAG = AndroidRelay.TAG;
 
 	public static final String ACTION_SEND_LOG = "com.nyaruka.log.SEND_LOG";//$NON-NLS-1$
 	public static final String EXTRA_SEND_INTENT_ACTION = "com.nyaruka.log.SEND_INTENT_ACTION";//$NON-NLS-1$
@@ -143,18 +143,15 @@ public class SendLogActivity extends Activity {
 		list.add("time");
 		
 		list.add("-t");
-		list.add("1000");
+		list.add("2500");
 
 		if (mBuffer != null) {
 			list.add("-b");
 			list.add(mBuffer);
 		}
-
-		if (mFilterSpecs != null) {
-			for (String filterSpec : mFilterSpecs) {
-				list.add(filterSpec);
-			}
-		}
+		
+		list.add(AndroidRelay.TAG + ":V");
+		list.add("*:S");
 
 		mCollectLogTask = (CollectLogTask) new CollectLogTask().execute(list);
 	}
@@ -190,7 +187,7 @@ public class SendLogActivity extends Activity {
 					log.append(MainActivity.LINE_SEPARATOR);
 				}
 			} catch (IOException e) {
-				Log.e(MainActivity.TAG, "CollectLogTask.doInBackground failed", e);//$NON-NLS-1$
+				Log.e(TAG, "CollectLogTask.doInBackground failed", e);//$NON-NLS-1$
 			}
 			
 			SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());

@@ -22,7 +22,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 public class MessageListFragment extends ListFragment {
-	public static final String TAG = "MessageListFragment";
+	public static final String TAG = AndroidRelay.TAG;
 	
 	private TextMessageAdapter m_adapter;
 	private static Vector<TextMessage> s_updateMessages = new Vector<TextMessage>();

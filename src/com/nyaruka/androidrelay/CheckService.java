@@ -7,12 +7,13 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 
 import com.commonsware.cwac.wakeful.WakefulIntentService;
 
 public class CheckService extends WakefulIntentService {
-	public static final String TAG = CheckService.class.getSimpleName();
+	public static final String TAG = AndroidRelay.TAG;
 	
 	public CheckService() {
 		super(CheckService.class.getName());
@@ -37,13 +38,17 @@ public class CheckService extends WakefulIntentService {
 		}
 		
 		// if our radio is off, output some debugging
-		if (!isOn){
-			Log.d(TAG, "__RADIO OFF");
-			for(int i=0;i<networks.length;i++){
-				Log.d(TAG, "__ " + networks[i].getTypeName() + "  connection? " + networks[i].isConnectedOrConnecting());
-			}	
+		Log.d(TAG, "_RADIO STATUS");
+		for(int i=0;i<networks.length;i++){
+			Log.d(TAG, "__ " + networks[i].getTypeName() + "  connection? " + networks[i].isConnectedOrConnecting());
 		}
-
+		
+		// check our telephony manager
+		TelephonyManager tele = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
+		Log.d(TAG, "__ call state: " + tele.getCallState());
+		Log.d(TAG, "__ data state: " + tele.getDataState());
+		Log.d(TAG, "__ network type: " + tele.getNetworkType());
+		
 	    return isOn;
 	}
 	
@@ -78,6 +83,7 @@ public class CheckService extends WakefulIntentService {
 	@Override
 	protected void doWakefulWork(Intent intent) {
 		Log.d(TAG, "==Check service running");
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 		
 		// make sure our SMS modem is hooked up
 		if (!BootStrapper.checkService(this.getApplicationContext())){
@@ -94,14 +100,18 @@ public class CheckService extends WakefulIntentService {
 		}
 
 		// if we don't have radio connectivity, we toggle airplane mode
-		try{
-			if (!isRadioOn()){
-				Log.d(TAG, "__RADIO OFF - tickling airplane mode");
-				tickleAirplaneMode();
-				Log.d(TAG, "__RADIO OFF - done tickling airplane mode");
+		boolean isRadioOn = isRadioOn();
+		if (prefs.getBoolean("airplane_hack", false)){
+			Log.d(TAG, "__CHECKING RADIO");
+			try{
+				if (!isRadioOn){
+					Log.d(TAG, "__RADIO OFF - tickling airplane mode");
+					tickleAirplaneMode();
+					Log.d(TAG, "__RADIO ON - done tickling airplane mode");
+				}
+			} catch (Throwable t){
+				Log.d(TAG, "Error thrown checking network connectivity", t);
 			}
-		} catch (Throwable t){
-			Log.d(TAG, "Error thrown checking network connectivity", t);
 		}
 		
 		// check our power levels

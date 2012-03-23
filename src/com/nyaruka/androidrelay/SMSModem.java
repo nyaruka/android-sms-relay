@@ -21,7 +21,7 @@ public final class SMSModem extends BroadcastReceiver {
 	private static final String SMS_DELIVER_REPORT_ACTION = "com.nyaruka.androidrelay.SMS_DELIVER_REPORT";
 	private static final String SMS_DELIVER_REPORT_TOKEN_EXTRA = "token";
 
-	private static final String TAG = SMSModem.class.getSimpleName();
+	private static final String TAG = AndroidRelay.TAG;
 	private final Context context;
 	private final SmsManager smsManager;
 	private final SmsModemListener listener;
@@ -54,7 +54,6 @@ public final class SMSModem extends BroadcastReceiver {
 			final ArrayList<String> parts = smsManager.divideMessage(message);
 			final Intent intent = new Intent(SMS_DELIVER_REPORT_ACTION);
 			intent.setData(Uri.fromParts("sms", token, ""));
-			Log.d(TAG, "Data: " + intent.getData());
 			intent.putExtra(SMS_DELIVER_REPORT_TOKEN_EXTRA, token);
 			final PendingIntent sentIntent = PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 			final ArrayList<PendingIntent> intents = new ArrayList<PendingIntent>();
@@ -62,7 +61,7 @@ public final class SMSModem extends BroadcastReceiver {
 				intents.add(sentIntent);
 			}
 			pendingSMS.put(token, parts.size());
-			Log.d(TAG, "Sending to: " + address + " parts: " + parts + " intents: " + intents);
+			Log.d(TAG, "Sending [" + intent.getData() + "] " + address + " - " + parts);
 			smsManager.sendMultipartTextMessage(address, null, parts, intents, null);
 		}
 	}

@@ -25,34 +25,6 @@ public class MainActivity extends FragmentActivity {
 		setContentView(R.layout.main);
 		s_this = this;
 	}
-
-	/*
-	@Override
-	public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
-	  super.onCreateContextMenu(menu, v, menuInfo);
-	  MenuInflater inflater = getMenuInflater();
-	  inflater.inflate(R.menu.message_context, menu);
-	}
-	
-	@Override
-	public boolean onContextItemSelected(MenuItem item) {
-	  AdapterContextMenuInfo info = (AdapterContextMenuInfo) item.getMenuInfo();
-	  switch (item.getItemId()) {
-	  case R.id.msg_reprocess:
-		  TextMessage msg = msgAdapter.getItem((int) info.id);
-		  if (msg.direction == TextMessage.INCOMING){
-			  msg.status = TextMessage.RECEIVED;
-			  AndroidRelay.getHelper(this).updateMessage(msg);
-			  updateMessage(msg);
-			  CheckService.schedule(this.getApplicationContext());
-		  }
-		  
-		  return true;
-	  default:
-		  return super.onContextItemSelected(item);
-	  }
-	}
-	*/
 	
 	public static boolean alive(){
 		return s_this != null;

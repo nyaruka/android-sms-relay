@@ -24,7 +24,7 @@ import android.util.Log;
 import android.widget.Toast;
 
 public class SettingsActivity extends PreferenceActivity {
-	public static final String TAG = CheckService.class.getSimpleName();
+	public static final String TAG = AndroidRelay.TAG;
 	
     @Override
     public void onCreate(Bundle savedInstanceState) {        

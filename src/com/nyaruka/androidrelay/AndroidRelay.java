@@ -9,6 +9,8 @@ import android.content.pm.PackageManager;
 
 public class AndroidRelay extends Application {
 
+	public static final String TAG = "AndroidRelay";
+	
 	private TextMessageHelper m_helper;
 	
     @Override

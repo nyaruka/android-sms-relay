@@ -40,9 +40,13 @@
 </PreferenceCategory>
 
     <PreferenceCategory android:title="Advanced">
+        <CheckBoxPreference android:defaultValue="false" android:title="Airplane Mode Hack" android:summary="Toggles airplane mode off and on when relayer detects loss of GSM connection" android:key="airplane_hack"/>
+    </PreferenceCategory>
+        
+    
+    <PreferenceCategory android:title="Debug">
         <Preference android:title="Clear Messages" android:summary="Clears all messages in our local database" android:key="clear_messages"/>
         <Preference android:title="Send Debug Log" android:summary="Send a debug log to Nyaruka" android:key="send_log"/>
     </PreferenceCategory>
-    
     
 </PreferenceScreen>
