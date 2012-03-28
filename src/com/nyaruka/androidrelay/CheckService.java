@@ -11,6 +11,7 @@ import android.telephony.TelephonyManager;
 import android.util.Log;
 
 import com.commonsware.cwac.wakeful.WakefulIntentService;
+import com.nyaruka.androidrelay.AndroidRelay.PhoneState;
 
 public class CheckService extends WakefulIntentService {
 	public static final String TAG = AndroidRelay.TAG;
@@ -48,6 +49,10 @@ public class CheckService extends WakefulIntentService {
 		Log.d(TAG, "__ call state: " + tele.getCallState());
 		Log.d(TAG, "__ data state: " + tele.getDataState());
 		Log.d(TAG, "__ network type: " + tele.getNetworkType());
+		
+		PhoneState phoneState = AndroidRelay.getPhoneState(context);
+		Log.d(TAG, "__ phone state: " + phoneState.state);
+		Log.d(TAG, "__ signal strength: " + phoneState.strength);
 		
 	    return isOn;
 	}
