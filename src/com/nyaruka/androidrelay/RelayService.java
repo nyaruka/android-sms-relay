@@ -91,13 +91,13 @@ public class RelayService extends Service implements SMSModem.SmsModemListener {
 				}
 			} 
 			// less than 25% and haven't already reported it
-			else if (level <= 25 && s_lastAlert != ALERT_25_PERCENT){
+			else if (level <= 25 && level > 5 && s_lastAlert != ALERT_25_PERCENT){
 				if (sendAlert(c, "Relayer has no power and battery level at " + level + "%", "")){
 					s_lastAlert = ALERT_25_PERCENT;
 				}
 			} 
 			// less than 50% and haven't already reported it
-			else if (level <= 50 && s_lastAlert != ALERT_50_PERCENT){
+			else if (level <= 50 && level > 25 && s_lastAlert != ALERT_50_PERCENT){
 				if (sendAlert(c, "Relayer has no power and battery level at " + level + "%", "")){
 					s_lastAlert = ALERT_50_PERCENT;
 				}
