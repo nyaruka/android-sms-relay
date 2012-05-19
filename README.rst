@@ -31,6 +31,11 @@ TODO
 * Remove messages from the SMS inbox
 * Tweak the first use experience to be a lot nicer
 
+LICENSE
+==========
+
+Android SMS Relay is licensed under the GPL v3.  You are free to modify and distribute this software, and modify it as you see fit.  You can even charge for it, but you must make the source code freely available forr anybody to download.  Note that you cannot use any part of this software without falling under the license, please refer to LICENSE.txt for details.
+
 CHANGELOG
 ==========
 
