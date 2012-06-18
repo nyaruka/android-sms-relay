@@ -29,7 +29,6 @@ TODO
 * Allow configuration of the handset via a file attachment, could make client configuration easier
 * Even more reliability / paranoia updates to make sure a message never gets lost
 * Remove messages from the SMS inbox
-* Tweak the first use experience to be a lot nicer
 
 LICENSE
 ==========
@@ -38,6 +37,20 @@ Android SMS Relay is licensed under the GPL v3.  You are free to modify and dist
 
 CHANGELOG
 ==========
+
+0.0.5
+-----
+* Replaced Sherlockactionbar with Android Actionbarcompatibility
+* Change password through the preferences
+* Use password as preference incoming keyword
+* Set preferred network through preferences
+* Change preferred network using sms e.g "password data|wifi"
+* The preferred network will take effect based on the next update interval
+* Clear messages using sms e.g "password clear"
+* The process to tickle airplane mode and when to do so
+* Always tickle the default APN to make sure that after airplane the Mobile data is perfectly working
+* Removed the airplane hack in the preference
+* Replaced the airplane mode hack with the ability to send sms to reset e.g "password reset"
 
 0.0.4
 -----
