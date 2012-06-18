@@ -2,19 +2,20 @@ package com.nyaruka.androidrelay;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v4.app.FragmentActivity;
-import android.support.v4.view.Menu;
-import android.support.v4.view.MenuItem;
+import android.util.Log;
+import android.view.KeyEvent;
+import android.view.Menu;
 import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.widget.Toast;
 
-import com.actionbarsherlock.R;
 import com.commonsware.cwac.wakeful.WakefulIntentService;
+import com.nyaruka.android.actionbarcompat.ActionBarActivity;
 import com.nyaruka.androidrelay.data.TextMessage;
 
-public class MainActivity extends FragmentActivity {
+public class MainActivity extends ActionBarActivity {
 
-	public static final String TAG = "FragmentActivity";
+	public static final String TAG = MainActivity.class.getSimpleName();
     public final static String LINE_SEPARATOR = System.getProperty("line.separator");//$NON-NLS-1$
 	
 	private static MainActivity s_this;
@@ -46,6 +47,18 @@ public class MainActivity extends FragmentActivity {
 		}
 	}
 	
+	@Override
+	public boolean onKeyDown(int keyCode, KeyEvent event) {
+		if ( keyCode == KeyEvent.KEYCODE_MENU ) {
+			Log.d(TAG, "MENU pressed");
+			Intent settingsActivity = new Intent(getBaseContext(), SettingsActivity.class);
+			startActivity(settingsActivity);
+			return true;
+		}
+		return super.onKeyDown(keyCode, event);
+	}
+	
+	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 	    // Handle item selection
 	    switch (item.getItemId()) {
@@ -59,14 +72,13 @@ public class MainActivity extends FragmentActivity {
 	    	    Toast.makeText(MainActivity.this, "Syncing messages", Toast.LENGTH_LONG).show();
 	    		return true;
 	    }
-	    return false;
+	    return super.onOptionsItemSelected(item);
 	}
 	
-	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 	    MenuInflater inflater = getMenuInflater();
-	    inflater.inflate(R.menu.main, menu);
-	    return true;
+		inflater.inflate(R.menu.main, menu);
+	    return super.onCreateOptionsMenu(menu);
 	}
 	
 	@Override
