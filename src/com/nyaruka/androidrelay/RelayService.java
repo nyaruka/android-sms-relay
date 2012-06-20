@@ -26,16 +26,24 @@ import com.nyaruka.androidrelay.data.TextMessageHelper;
 import com.nyaruka.log.SendLogActivity;
 
 import android.app.Service;
-import android.content.BroadcastReceiver;
+import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.database.Cursor;
+import android.database.SQLException;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.net.Uri;
 import android.net.wifi.WifiManager;
 import android.os.BatteryManager;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
+import android.telephony.TelephonyManager;
 import android.util.Log;
+import android.widget.Toast;
 
 public class RelayService extends Service implements SMSModem.SmsModemListener {
 
@@ -52,6 +60,133 @@ public class RelayService extends Service implements SMSModem.SmsModemListener {
 	public static final int ALERT_50_PERCENT = 1;
 	public static final int ALERT_25_PERCENT = 2;
 	public static final int ALERT_5_PERCENT = 3;
+	
+	// APN related
+	public static final Uri APN_TABLE_URI =  Uri.parse("content://telephony/carriers");
+	public static final Uri PREFERRED_APN_URI = Uri.parse("content://telephony/carriers/preferapn");
+	
+	public static boolean isReset = false;
+
+	public int createAPN(String name, String apnAddr) {
+		int id = -1;
+
+		TelephonyManager tele = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
+		String mcc = tele.getSimOperator().substring(0, 3);
+		String mnc = tele.getSimOperator().substring(3);
+		
+		ContentResolver resolver = this.getContentResolver();
+		ContentValues values = new ContentValues();
+		values.put("name", name);
+		values.put("apn", apnAddr);
+
+		values.put("mcc", mcc);
+		values.put("mnc", mnc);
+		values.put("numeric", tele.getSimOperator());
+		
+		Cursor cursor = null;
+		
+		try {
+			Uri newAPN = resolver.insert(APN_TABLE_URI, values);
+			if(newAPN != null) {
+				cursor = resolver.query(newAPN, null, null, null, null);
+				Log.d(TAG, "New APN added! Yeee.");
+
+				// Obtain the apn id
+                int idindex = cursor.getColumnIndex("_id");
+                cursor.moveToFirst();
+                id = cursor.getShort(idindex);
+			}
+		}catch (SQLException e) {
+			Log.d(TAG, e.getMessage());
+		}finally {
+			if (cursor != null)
+				cursor.close();
+		}
+		
+		return id;
+	}
+	
+	public int getDefaultAPN() {
+		int id = -1;
+		ContentResolver resolver = this.getContentResolver();
+		Cursor cursor = resolver.query(PREFERRED_APN_URI, new String[] { "_id", "name" }, null, null, null);
+		
+		if (cursor != null) {
+			try {
+				if (cursor.moveToFirst()) {
+					id = cursor.getInt(cursor.getColumnIndex("_id"));
+				}
+			} catch (SQLException e) {
+				Log.d(TAG, e.getMessage());
+			} finally {
+			cursor.close();
+			}
+		}
+		return id;
+	}
+	
+	public boolean setDefaultAPN(int id) {
+		boolean res = false;
+        ContentResolver resolver = this.getContentResolver();
+        ContentValues values = new ContentValues();
+
+        values.put("apn_id", id); 
+
+        try {
+            resolver.update(PREFERRED_APN_URI, values, null, null);
+            Cursor cursor = resolver.query(PREFERRED_APN_URI, new String[]{"name","apn"}, "_id="+id, null, null);
+            if(cursor != null) {
+                res = true;
+                cursor.close();
+            }
+        }
+        catch (SQLException e) {
+            Log.d(TAG, e.getMessage());
+        }
+        return res;
+	}
+
+	public void deleteAPN(int id) {
+		ContentResolver resolver = this.getContentResolver();
+        
+        try {
+        	resolver.delete(APN_TABLE_URI, "_id=?", new String[] { Integer.toString(id)});
+        } catch(SQLException e) {
+        	
+        }
+	}
+	
+	public void deleteUnfavoriteAPNs() {
+		ContentResolver resolver = this.getContentResolver();
+		
+		try {
+        	resolver.delete(APN_TABLE_URI, "apn LIKE ?", new String[]{"relay.nyaruka.com"});
+		} catch(SQLException e) {
+			
+		}
+	}
+	
+	public void tickleDefaultAPN() {
+		int id_default = this.getDefaultAPN();
+		int id_fakeAPN = this.createAPN("SMS Relay", "relay.nyaruka.com");
+
+		Log.d(TAG, "Tickling the Default APN" + id_default +" by fake APN " + id_fakeAPN);
+
+		// make the fake APN the default for
+		this.setDefaultAPN(id_fakeAPN);
+
+		// 30 seconds before
+		try{
+			Thread.sleep(30000);
+		} catch (Throwable tt){}
+
+		// switching back to the real working APN
+		this.setDefaultAPN(id_default);
+		
+		//and delete the fake APN not in use anymore
+		//this.deleteAPN(id_fakeAPN);
+		this.deleteUnfavoriteAPNs();
+	}
 	
 	@Override
 	public IBinder onBind(Intent intent) {
@@ -200,7 +335,7 @@ public class RelayService extends Service implements SMSModem.SmsModemListener {
 			
 		// well that didn't work, let's flip our connection status, that might just help.. we sleep a bit so things can connect
 		boolean newWifiState = !wifi.isWifiEnabled();
-		Log.d(TAG, "Connection test failed, flipping WIFI state to: " + newWifiState);
+		Log.d(TAG, "Toggling Connection: Connection test failed, flipping WIFI state to: " + newWifiState);
 		wifi.setWifiEnabled(newWifiState);
 		
 		// sleep 30 seconds to give the network a chance to connect
@@ -208,7 +343,7 @@ public class RelayService extends Service implements SMSModem.SmsModemListener {
 			Thread.sleep(30000);
 		} catch (Throwable tt){}
 	}
-	
+
 	public boolean isConnectionToggled(){
 		return m_targetWifiState != UNCHANGED;
 	}
@@ -403,7 +538,7 @@ public class RelayService extends Service implements SMSModem.SmsModemListener {
 			msg.error = null;
 			Log.d(TAG, "Msg '" + msg.text + "' handed to server.");
 		} catch (HttpResponseException e){
-			Log.d(TAG, "Got Error: "+ e.getMessage(), e);
+			Log.d(TAG, "HTTP ERROR Got Error: "+ e.getMessage(), e);
 			msg.error = e.getClass().getSimpleName() + ": " + e.getMessage();
 			msg.status = TextMessage.ERRORED;			
 		} catch (IOException e){
@@ -411,7 +546,7 @@ public class RelayService extends Service implements SMSModem.SmsModemListener {
 			msg.status = TextMessage.ERRORED;
 			throw e;
 		} catch (Throwable t) {
-			Log.d(TAG, "Got Error: "+ t.getMessage(), t);
+			Log.d(TAG, "THROWABLE Got Error: "+ t.getMessage(), t);
 			msg.error = t.getClass().getSimpleName() + ": " + t.getMessage();
 			msg.status = TextMessage.ERRORED;
 		} finally {     
@@ -537,15 +672,21 @@ public class RelayService extends Service implements SMSModem.SmsModemListener {
 		}
 		MainActivity.updateMessage(msg);
 	}
-	
+
 	public void onNewSMS(String number, String message) {
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 		boolean process_messages = prefs.getBoolean("process_incoming", false);
 
-		TextMessageHelper helper = getHelper();		
+		TextMessageHelper helper = getHelper();
+		String keyword = prefs.getString("relay_password", "nyaruka").toLowerCase();
 
-		// if someone sends 'nyaruka log' then send a log to the server
-		if (message.equalsIgnoreCase("nyaruka log")){
+		// if we aren't supposed to process messages, ignore this message
+		if (!process_messages){
+			return;
+		}
+		
+		// if someone sends 'keyword log' then send a log to the server
+		if (message.equalsIgnoreCase(keyword + " log")){
     		final Intent intent = new Intent(SendLogActivity.ACTION_SEND_LOG);
     		intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             intent.putExtra(SendLogActivity.EXTRA_SEND_INTENT_ACTION, Intent.ACTION_SENDTO);
@@ -558,12 +699,55 @@ public class RelayService extends Service implements SMSModem.SmsModemListener {
 			modem.sendSms(number, "Log being sent. " + unsynced + " unsynced.  " + erroredOut + " out errors.  " + erroredIn + " in errors.", "-1");
             return;
 		}
+
+		if(message.equalsIgnoreCase(keyword + " reset")){
+			// change the label to true
+			isReset = true;
+			Log.d(TAG, "The reset process is set to " + Boolean.toString(isReset));
+			
+			// start the check service for reset changes to take effect
+			kickService();
 		
-		// if we aren't supposed to process messages, ignore this message
-		if (!process_messages){
+			modem.sendSms(number, "Reset process has been started. ", "-1");			
+			return;
+		}
+
+		if(message.equalsIgnoreCase(keyword + " clear")){
+			Log.d(TAG, "Clearing all messages will erase all messages");
+			AndroidRelay.clearMessages(RelayService.this);
+            Toast.makeText(RelayService.this, "Messages cleared", Toast.LENGTH_LONG).show();
+            
+            modem.sendSms(number, "All messages have been removed.", "-1");			
 			return;
 		}
 		
+		{
+			SharedPreferences.Editor editor = prefs.edit();
+
+			// process message with 'keyword data and change the network connection to specified mode
+			if(message.equalsIgnoreCase(keyword + " data")) {
+				Log.d(TAG, "Switching to data connection");
+
+				editor.putString("pref_net", "1");
+				editor.commit();
+
+				modem.sendSms(number, "Your preferred network is now set to 'MOBILE DATA'", "-1");			
+				return;
+			}
+		
+			// process message with 'keyword wifi and change the network connection to specified mode
+			if(message.equalsIgnoreCase(keyword + " wifi")) {
+				Log.d(TAG, "Switching to wifi connection");
+			
+				editor.putString("pref_net", "0");
+				editor.commit();
+
+				modem.sendSms(number, "Your preferred network is now set to 'WIFI'", "-1");
+				return;
+			}
+		}
+
+
 		TextMessage msg = null;
 
 		msg = new TextMessage();

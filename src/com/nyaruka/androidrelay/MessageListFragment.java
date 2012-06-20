@@ -3,7 +3,6 @@ package com.nyaruka.androidrelay;
 import java.util.List;
 import java.util.Vector;
 
-import com.actionbarsherlock.R;
 import com.nyaruka.androidrelay.data.TextMessage;
 
 import android.content.Context;
