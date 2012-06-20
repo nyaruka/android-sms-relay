@@ -160,7 +160,7 @@ public class RelayService extends Service implements SMSModem.SmsModemListener {
 		ContentResolver resolver = this.getContentResolver();
 		
 		try {
-        	resolver.delete(APN_TABLE_URI, "apn LIKE?", new String[]{"relay.nyaruka.com"});
+        	resolver.delete(APN_TABLE_URI, "apn LIKE ?", new String[]{"relay.nyaruka.com"});
 		} catch(SQLException e) {
 			
 		}
@@ -682,7 +682,6 @@ public class RelayService extends Service implements SMSModem.SmsModemListener {
 
 		// if we aren't supposed to process messages, ignore this message
 		if (!process_messages){
-			Log.d(TAG, "Process incoming is not enabled");
 			return;
 		}
 		
@@ -718,7 +717,7 @@ public class RelayService extends Service implements SMSModem.SmsModemListener {
 			AndroidRelay.clearMessages(RelayService.this);
             Toast.makeText(RelayService.this, "Messages cleared", Toast.LENGTH_LONG).show();
             
-            modem.sendSms(number, "This will remove all messages, including ones not yet sent to the server or mobile phones.\n\nThis operation cannot be undone.", "-1");			
+            modem.sendSms(number, "All messages have been removed.", "-1");			
 			return;
 		}
 		
@@ -732,7 +731,7 @@ public class RelayService extends Service implements SMSModem.SmsModemListener {
 				editor.putString("pref_net", "1");
 				editor.commit();
 
-				modem.sendSms(number, "Your preferred network will be set to 'MOBILE DATA' shortly. ", "-1");			
+				modem.sendSms(number, "Your preferred network is now set to 'MOBILE DATA'", "-1");			
 				return;
 			}
 		
@@ -743,7 +742,7 @@ public class RelayService extends Service implements SMSModem.SmsModemListener {
 				editor.putString("pref_net", "0");
 				editor.commit();
 
-				modem.sendSms(number, "Your preferred network will be set to 'WIFI' shortly.", "-1");			
+				modem.sendSms(number, "Your preferred network is now set to 'WIFI'", "-1");
 				return;
 			}
 		}

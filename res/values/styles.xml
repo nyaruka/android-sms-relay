@@ -22,7 +22,7 @@
         <item name="android:windowContentOverlay">@drawable/actionbar_shadow</item>
 
         <!-- for programmatic instantiation -->
-<!--         <item name="actionbarCompatTitleStyle">@style/ActionBarCompatTitle</item> -->
+        <!-- <item name="actionbarCompatTitleStyle">@style/ActionBarCompatTitle</item> -->
         <item name="actionbarCompatItemStyle">@style/ActionBarCompatItem</item>
         <item name="actionbarCompatItemHomeStyle">@style/ActionBarCompatHomeItem</item>
         <item name="actionbarCompatProgressIndicatorStyle">@style/ActionBarCompatProgressIndicator</item>
@@ -41,21 +41,6 @@
     <style name="ActionBarCompatProgressIndicator" parent="android:style/Widget.ProgressBar.Large">
         <item name="android:indeterminate">true</item>
     </style>
-
-<!--     <style name="ActionBarCompatTitleBase"> -->
-<!--         <item name="android:id">@id/actionbar_compat_title</item> -->
-
-<!--         <item name="android:gravity">center_vertical</item> -->
-<!--         <item name="android:textSize">20sp</item> -->
-<!--         <item name="android:paddingLeft">6dp</item> -->
-<!--         <item name="android:paddingRight">6dp</item> -->
-<!--         <item name="android:singleLine">true</item> -->
-<!--         <item name="android:ellipsize">marquee</item> -->
-<!--     </style> -->
-
-<!--     <style name="ActionBarCompatTitle" parent="style/ActionBarCompatTitleBase"> -->
-<!--         <item name="android:textColor">@color/actionbar_title_color</item> -->
-<!--     </style> -->
 
     <style name="ActionBarCompatItem" parent="style/ActionBarCompatItemBase">
     </style>

@@ -111,7 +111,7 @@ public class CheckService extends WakefulIntentService {
 		}
 
 		Log.d(TAG, "Which Network is Prefered " + prefs.getString("pref_net", "0"));
-		boolean isWifiPreferred = (prefs.getString("pref_net", "0").equals("0")) ? true : false;
+		boolean isWifiPreferred = (prefs.getString("pref_net", "0").equals("0"));
 		WifiManager wifi = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
 
 		if(isWifiPreferred) {
@@ -124,13 +124,13 @@ public class CheckService extends WakefulIntentService {
 		wifi.setWifiEnabled(isWifiPreferred);
 		
 		if (RelayService.isReset){
-			Log.d(TAG, "__CHECKING RADIO");
+			Log.d(TAG, "__RESTING PROCESS");
 			try{
-				Log.d(TAG, "__RADIO OFF - tickling airplane mode");
+				Log.d(TAG, "__REST - tickling airplane mode");
 				tickleAirplaneMode();
-				Log.d(TAG, "__RADIO ON - done tickling airplane mode");
+				Log.d(TAG, "__REST - done tickling airplane mode");
 				relayer.tickleDefaultAPN();
-				Log.d(TAG, "__RADIO ON - done tickling default APN mode");	
+				Log.d(TAG, "__REST - done tickling default APN mode");	
 					
 				// disable the reset message
 				RelayService.isReset = false;

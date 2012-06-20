@@ -31,7 +31,7 @@
             android:defaultValue="15000" 
             android:entries="@array/updateInterval"
             android:entryValues="@array/updateIntervalValues"
-        	android:summary="Define How Long We Will Wait Before Resending Errored Messages And Checking The Server For New Ones"/>    
+        	android:summary="Define how long we will wait before resending errored messages and checking the server for new ones"/>    
             
     </PreferenceCategory>
 
@@ -48,9 +48,9 @@
             android:dialogTitle="Server Delivery URL" android:dialogMessage="Enter the server delivery URL" android:defaultValue="http://" android:summary="Defines the URL outgoing messages will be fetched from" android:title="Delivery URL" android:key="delivery_url"/>
 		            
 	</PreferenceCategory>
-    <PreferenceCategory android:title="Router"><EditTextPreference android:summary="Configures our endpoints based on a Router hostname" android:key="router_hostname" android:dialogTitle="Hostname" android:title="Hostname" android:dialogMessage="Enter in the hostname (and optional port) for the Router endpoint" />
+    <PreferenceCategory android:title="Router"><EditTextPreference android:summary="Configures our endpoints based on a router hostname" android:key="router_hostname" android:dialogTitle="Hostname" android:title="Hostname" android:dialogMessage="Enter in the hostname (and optional port) for the Router endpoint" />
     <EditTextPreference android:summary="The name of the backend for the Router" android:key="router_backend" android:title="Backend" android:dialogTitle="Backend" android:dialogMessage="The name of the backend for the Router server"/>
-    <EditTextPreference android:summary="The router password for the Router instance" android:key="router_password" android:dialogTitle="Password" android:title="Password" android:dialogMessage="The password for the Router instance"/>
+    <EditTextPreference android:summary="The router password for the router instance" android:key="router_password" android:dialogTitle="Password" android:title="Password" android:dialogMessage="The password for the Router instance"/>
 </PreferenceCategory>
 
     <PreferenceCategory android:title="Debug">
