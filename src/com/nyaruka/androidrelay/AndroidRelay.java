@@ -64,7 +64,7 @@ public class AndroidRelay extends Application {
 		}
 		
 		public void	onSignalStrengthsChanged(SignalStrength signalStrength){
-			Log.d(TAG, "Signal strength changed to: " + signalStrength.getGsmSignalStrength());
+			//Log.d(TAG, "Signal strength changed to: " + signalStrength.getGsmSignalStrength());
 			strength = signalStrength.getGsmSignalStrength();
 		}
 	}

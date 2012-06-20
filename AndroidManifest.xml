@@ -17,10 +17,12 @@
   <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
   <uses-permission android:name="android.permission.CHANGE_WIFI_STATE"/>
   <uses-permission android:name="android.permission.READ_LOGS" />
+  <uses-permission android:name="android.permission.WRITE_APN_SETTINGS" />
   
   <uses-sdk android:minSdkVersion="8" android:targetSdkVersion="13" />
   
-  <application android:label="@string/app_name" android:icon="@drawable/ic_launcher" android:name="com.nyaruka.androidrelay.AndroidRelay">
+  <application android:label="@string/app_name" android:icon="@drawable/ic_launcher" 
+       android:name="com.nyaruka.androidrelay.AndroidRelay">
     
     <!-- Services to support SMS commands -->
     <service android:enabled="true" android:name=".RebootService"/>
@@ -51,17 +53,14 @@
     </receiver>
     
     <!-- Register our status activity which is the only UI in the app, used to see what's up -->
-    <activity android:name="MainActivity"
-              android:label="@string/app_name"
-              android:theme="@style/Theme.Sherlock">
+    <activity android:name="MainActivity" android:theme="@style/AppTheme">
       <intent-filter>
         <action android:name="android.intent.action.MAIN" />
         <category android:name="android.intent.category.LAUNCHER" />
       </intent-filter>                  
     </activity>
     
-    <activity android:name=".SettingsActivity"
- 	      android:launchMode="singleInstance">        
+    <activity android:name=".SettingsActivity" android:theme="@style/PrefTheme" android:launchMode="singleInstance">        
     </activity>        
     
      <activity android:name="com.nyaruka.log.SendLogActivity"
@@ -76,4 +75,4 @@
     <activity android:name=".LogViewer"/>
     
   </application>
-</manifest> 
+</manifest>

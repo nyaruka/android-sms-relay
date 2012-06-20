@@ -2,7 +2,6 @@ package com.nyaruka.androidrelay;
 
 import java.net.URLEncoder;
 
-import com.actionbarsherlock.R;
 import com.commonsware.cwac.wakeful.WakefulIntentService;
 import com.nyaruka.log.SendLogActivity;
 
@@ -21,6 +20,9 @@ import android.preference.PreferenceManager;
 import android.preference.Preference.OnPreferenceClickListener;
 import android.preference.Preference.OnPreferenceChangeListener;
 import android.util.Log;
+import android.view.View;
+import android.view.Window;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 public class SettingsActivity extends PreferenceActivity {
@@ -28,8 +30,34 @@ public class SettingsActivity extends PreferenceActivity {
 	
     @Override
     public void onCreate(Bundle savedInstanceState) {        
-        super.onCreate(savedInstanceState);        
+    	super.onCreate(savedInstanceState);
+    	View title = getWindow().findViewById(android.R.id.title);
+    	title.setPadding(5, 0, 0, 0);
         addPreferencesFromResource(R.xml.preferences);
+        
+        // Add a listener for relay password
+        Preference relayPassword = (Preference) findPreference("relay_password");
+        relayPassword.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
+
+			@Override
+			public boolean onPreferenceChange(Preference preference,Object newValue) {
+				String password = newValue.toString();
+				Log.d(TAG, "New password " + password);
+				
+				return true;
+			}
+        });
+        
+        Preference prefNetwork = (Preference) findPreference("pref_net");
+        prefNetwork.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
+			public boolean onPreferenceChange(Preference preference, Object newValue) {
+				
+				Log.d(TAG, "Your preferred network has been changed to: " + newValue);
+				return true;
+			}
+        });
+        
+
         
         // Add a listener for our clear button, with a confirmation
         Preference clearMessages = (Preference) findPreference("clear_messages");
@@ -70,37 +98,37 @@ public class SettingsActivity extends PreferenceActivity {
 			}
         });
         
-        Preference setRapidHost = (Preference) findPreference("rapidsms_hostname");
+        Preference setRapidHost = (Preference) findPreference("router_hostname");
         setRapidHost.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
 			public boolean onPreferenceChange(Preference preference, Object newValue) {
 				String hostname = newValue.toString();
 				SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(SettingsActivity.this);
-				String backend = prefs.getString("rapidsms_backend", "android");
-				String password = prefs.getString("rapidsms_password", null);
+				String backend = prefs.getString("router_backend", "android");
+				String password = prefs.getString("router_password", null);
 				updateEndpoints(hostname, backend, password);
 				return true;
 			}        
         });
         
-        Preference setRapidBackend = (Preference) findPreference("rapidsms_backend");
+        Preference setRapidBackend = (Preference) findPreference("router_backend");
         setRapidBackend.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
 			public boolean onPreferenceChange(Preference preference, Object newValue) {
 				String backend = newValue.toString();
 				SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(SettingsActivity.this);
-				String hostname = prefs.getString("rapidsms_hostname", null);
-				String password = prefs.getString("rapidsms_password", null);
+				String hostname = prefs.getString("router_hostname", null);
+				String password = prefs.getString("router_password", null);
 				updateEndpoints(hostname, backend, password);
 				return true;
 			}        
         });
         
-        Preference setRapidPassword = (Preference) findPreference("rapidsms_password");
+        Preference setRapidPassword = (Preference) findPreference("router_password");
         setRapidPassword.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
 			public boolean onPreferenceChange(Preference preference, Object newValue) {
 				String password = newValue.toString();
 				SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(SettingsActivity.this);
-				String backend = prefs.getString("rapidsms_backend", "android");
-				String hostname = prefs.getString("rapidsms_hostname", null);
+				String backend = prefs.getString("router_backend", "android");
+				String hostname = prefs.getString("router_hostname", null);
 				updateEndpoints(hostname, backend, password);
 				return true;
 			}        
@@ -134,7 +162,7 @@ public class SettingsActivity extends PreferenceActivity {
 		editor.putString("delivery_url", deliveryURL);
 		editor.commit();
 
-		Toast.makeText(SettingsActivity.this, "RapidSMS Endpoints Set", Toast.LENGTH_LONG).show();
+		Toast.makeText(SettingsActivity.this, "Router Endpoints Set", Toast.LENGTH_LONG).show();
 		SettingsActivity.this.finish();
     }
 }

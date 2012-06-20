@@ -16,12 +16,9 @@
 
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <string name="app_name">SMS Relay</string>
-    <string name="alternate_title">An alternate title that is long</string>
-    <string name="toggle_title">Toggle title</string>
-
+    
     <string name="menu_refresh">Refresh</string>
     <string name="menu_search">Search</string>
-    <string name="menu_share">Share</string>
     
     <string name="message_subject">Android device log</string>
     <string name="acquiring_log_progress_dialog_message">Acquiring and sending log..</string>
