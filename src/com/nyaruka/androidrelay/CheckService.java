@@ -15,6 +15,7 @@ import android.util.Log;
 
 import com.commonsware.cwac.wakeful.WakefulIntentService;
 import com.nyaruka.androidrelay.AndroidRelay.PhoneState;
+import com.nyaruka.log.LogCollector;
 
 public class CheckService extends WakefulIntentService {
 	public static final String TAG = AndroidRelay.TAG;
@@ -87,10 +88,29 @@ public class CheckService extends WakefulIntentService {
 			Thread.sleep(30000);
 		} catch (Throwable t){}
 	}
+
+	/**
+	 * Restores our WIFI/DATA state to whatever is in our preference file.  No-op if 
+	 * our current state is the same as our preferred state.
+	 */
+	public void restoreDefaultNetwork(){
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+		
+		boolean isWifiPreferred = (prefs.getString("pref_net", "0").equals("0"));
+		WifiManager wifi = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+		
+		if (wifi.isWifiEnabled() != isWifiPreferred){
+			// toggle back to the preferred network
+			wifi.setWifiEnabled(isWifiPreferred);
+			
+			try{
+				Thread.sleep(30000);
+			} catch (Throwable t){}
+		}
+	}
 	
 	@Override
 	protected void doWakefulWork(Intent intent) {
-		
 		Log.d(TAG, "==Check service running");
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 		
@@ -103,27 +123,13 @@ public class CheckService extends WakefulIntentService {
 
 		// grab the relayer service, seeing if it started
 		RelayService relayer = RelayService.get();
-		
 
 		if (relayer == null){
 			Log.d(TAG, "No RelayService started yet, awaiting.");
 			return;
 		}
-
-		Log.d(TAG, "Which Network is Prefered " + prefs.getString("pref_net", "0"));
-		boolean isWifiPreferred = (prefs.getString("pref_net", "0").equals("0"));
-		WifiManager wifi = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
-
-		if(isWifiPreferred) {
-			Log.d(TAG, "__ Preferred network before airplane mode: WIFI");
-		}else{
-			Log.d(TAG, "__ Preferred network before airplane mode: MOBILE DATA");			
-		}
 		
-		// toggle back to the preferred network
-		wifi.setWifiEnabled(isWifiPreferred);
-		
-		if (RelayService.isReset){
+		if (RelayService.doReset){
 			Log.d(TAG, "__RESTING PROCESS");
 			try{
 				Log.d(TAG, "__REST - tickling airplane mode");
@@ -133,19 +139,10 @@ public class CheckService extends WakefulIntentService {
 				Log.d(TAG, "__REST - done tickling default APN mode");	
 					
 				// disable the reset message
-				RelayService.isReset = false;
+				RelayService.doReset = false;
 			} catch (Throwable t){
 				Log.d(TAG, "Error thrown checking network connectivity", t);
 			}
-		}
-
-		// toggle back to the preferred network
-		wifi.setWifiEnabled(isWifiPreferred);
-				
-		if(isWifiPreferred) {
-			Log.d(TAG, "__ Preferred network after airplane mode: WIFI");
-		}else{
-			Log.d(TAG, "__ Preferred network after airplane mode: MOBILE DATA");			
 		}
 
 		// check our power levels
@@ -161,6 +158,29 @@ public class CheckService extends WakefulIntentService {
 		} catch (Throwable t){
 			Log.d(TAG, "Error running check service.", t);
 		}
+		
+		// are we meant to send a log?  do so
+		if (RelayService.doSendLog){
+			String log = LogCollector.collectLog();
+			
+			if (log != null){
+				if (RelayService.sendAlert(getApplicationContext(), "Relay Log", log)){
+					RelayService.doSendLog = false;
+				} else {
+					relayer.toggleConnection();
+					if (RelayService.sendAlert(getApplicationContext(), "Relay Log", log)){
+						RelayService.doSendLog = false;
+					} else {
+						Log.d(TAG, "Failed sending log after two attempts, will retry on next check");
+					}
+				}
+			} else {
+				Log.d(TAG, "Failed collecting log, will retry on next check");
+			}
+		}
+		
+		// reset our connect if needbe
+		restoreDefaultNetwork();
 				
 		// reschedule ourselves
 		schedule(this.getApplicationContext());
@@ -170,7 +190,7 @@ public class CheckService extends WakefulIntentService {
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 		boolean process_incoming = prefs.getBoolean("process_incoming", false);
 		boolean process_outgoing = prefs.getBoolean("process_outgoing", false);
-		
+
 		if (process_outgoing){
 			try{
 				relayer.resendErroredSMS();
@@ -178,6 +198,9 @@ public class CheckService extends WakefulIntentService {
 				Log.d(TAG, "Error resending SMSes.", t);
 			}
 		}
+		
+		// set our network to our default
+		restoreDefaultNetwork();
 		
 		if (process_incoming){
 			try{
@@ -190,7 +213,7 @@ public class CheckService extends WakefulIntentService {
 					relayer.sendPendingMessagesToServer();
 				} catch (IOException e1){
 					Log.d(TAG, "__ FAILED TO SEND PENDING MESSAGES, SET RESET LABEL TO true");
-					RelayService.isReset = true;
+					RelayService.doReset = true;
 				} catch (Throwable tt){
 					Log.d(TAG, "Error sending messages to server", e);
 				}				
@@ -200,50 +223,44 @@ public class CheckService extends WakefulIntentService {
 		}
 
 		if (process_outgoing) {
+			// set our network to our default
+			restoreDefaultNetwork();
+			
 			try{
 				Log.d(TAG, "__ MARKING DELIVERIES");
 				relayer.markDeliveriesOnServer();
 			} catch (IOException e){
-				if (!relayer.isConnectionToggled()){
-					try{
-						Log.d(TAG, "Error marking deliveries on the server, toggling connection", e);
-						relayer.toggleConnection();
-						relayer.sendPendingMessagesToServer();
-					} catch (IOException e1) {
-						Log.d(TAG, "__ FAILED TO SEND PENDING MESSAGES, SET RESET LABEL TO true");
-						RelayService.isReset = true;
-					} catch (Throwable tt){
-						Log.d(TAG, "Error marking deliveries on the server", e);
-					}
-				} else {
+				try{
+					Log.d(TAG, "Error marking deliveries on the server, toggling connection", e);
+					relayer.toggleConnection();
+					relayer.markDeliveriesOnServer();
+				} catch (IOException e1) {
+					Log.d(TAG, "__ FAILED TO MARK DELIVERIES, SET RESET LABEL TO true");
+					RelayService.doReset = true;
+				} catch (Throwable tt){
 					Log.d(TAG, "Error marking deliveries on the server", e);
-					Log.d(TAG, "__ FAILED TO SEND PENDING MESSAGES, SET RESET LABEL TO true");
-					RelayService.isReset = true;
-				}			
+				}
 			} catch (Throwable t){
 				Log.d(TAG, "Error marking deliveries on the server", t);
 			}
+			
+			// set our network to our default
+			restoreDefaultNetwork();
 		
 			try{
 				Log.d(TAG, "__ CHECKING OUTBOX");
 				relayer.checkOutbox();
 			} catch (IOException e){
-				if (!relayer.isConnectionToggled()){
-					try{
-						Log.d(TAG, "Error checking outbox, toggling connection", e);
-						relayer.toggleConnection();
-						relayer.sendPendingMessagesToServer();
-					} catch (Exception e1) {
-						Log.d(TAG, "__ FAILED TO SEND PENDING MESSAGES TO SERVER, SET RESET LABEL TO: 'true'");
-						RelayService.isReset = true;
-					} catch (Throwable tt){
-						Log.d(TAG, "Error checking outbox", e);
-					}
-				} else {
+				try{
+					Log.d(TAG, "Error checking outbox, toggling connection", e);
+					relayer.toggleConnection();
+					relayer.checkOutbox();
+				} catch (Exception e1) {
+					Log.d(TAG, "__ FAILED TO CHECK OUTBOX, SET RESET LABEL TO: 'true'");
+					RelayService.doReset = true;
+				} catch (Throwable tt){
 					Log.d(TAG, "Error checking outbox", e);
-					Log.d(TAG, "__ FAILED TO SEND PENDING MESSAGES TO SERVER, SET RESET LABEL TO: 'true'");
-					RelayService.isReset = true;
-				}				
+				}
 			} catch (Throwable t){
 				Log.d(TAG, "Error checking outbox", t);
 			}
@@ -254,6 +271,9 @@ public class CheckService extends WakefulIntentService {
 		} catch (Throwable t){
 			Log.d(TAG, "Error trimming message", t);
 		}
+		
+		// set our network to our default
+		restoreDefaultNetwork();
 	}
 
 	public static void schedule(Context context){
