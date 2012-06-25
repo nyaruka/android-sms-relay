@@ -15,7 +15,7 @@
         
 	    <EditTextPreference
             android:dialogTitle="Relay Password" android:maxLength="7" android:dialogMessage="Make your own password, will be used as a keyword" android:defaultValue="nyaruka"
-            android:summary="The password setup here will be used as a keyword while changing your preferences throught SMS command" android:title="Relay Password" android:key="relay_password"/>
+            android:summary="This password will be used to validate administrative SMS commands" android:title="Relay Password" android:key="relay_password"/>
 
 		<ListPreference 
             android:key="pref_net"

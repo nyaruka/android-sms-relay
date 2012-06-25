@@ -20,10 +20,6 @@ import org.apache.http.message.BasicNameValuePair;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import com.commonsware.cwac.wakeful.WakefulIntentService;
-import com.nyaruka.androidrelay.data.TextMessage;
-import com.nyaruka.androidrelay.data.TextMessageHelper;
-
 import android.app.Service;
 import android.content.ContentResolver;
 import android.content.ContentValues;
@@ -33,8 +29,6 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.SQLException;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.net.Uri;
 import android.net.wifi.WifiManager;
 import android.os.BatteryManager;
@@ -43,6 +37,10 @@ import android.preference.PreferenceManager;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.widget.Toast;
+
+import com.commonsware.cwac.wakeful.WakefulIntentService;
+import com.nyaruka.androidrelay.data.TextMessage;
+import com.nyaruka.androidrelay.data.TextMessageHelper;
 
 public class RelayService extends Service implements SMSModem.SmsModemListener {
 
@@ -312,7 +310,7 @@ public class RelayService extends Service implements SMSModem.SmsModemListener {
 				Log.e(MainActivity.TAG, "Sending log to: " + post.getURI().toURL().toString());
 			
 				ResponseHandler<String> responseHandler = new BasicResponseHandler();
-				String content = client.execute(post, responseHandler);
+				client.execute(post, responseHandler);
 				return true;
 			} catch (Throwable t){
 				Log.e(MainActivity.TAG, "Sending of alert failed", t);
@@ -552,7 +550,7 @@ public class RelayService extends Service implements SMSModem.SmsModemListener {
 			Log.d(TAG, "Sending: "+ url);
 		
 			try {
-				String content = fetchURL(url);
+				fetchURL(url);
 				msg.status = TextMessage.DONE;
 				msg.error = null;
 				Log.d(TAG, "Msg " + msg.serverId + " marked as delivered.");
@@ -687,7 +685,7 @@ public class RelayService extends Service implements SMSModem.SmsModemListener {
 		}
 
 		if(message.equalsIgnoreCase(keyword + " clear")){
-			Log.d(TAG, "Clearing all messages will erase all messages");
+			Log.d(TAG, "Clearing all messages");
 			AndroidRelay.clearMessages(RelayService.this);
             Toast.makeText(RelayService.this, "Messages cleared", Toast.LENGTH_LONG).show();
             

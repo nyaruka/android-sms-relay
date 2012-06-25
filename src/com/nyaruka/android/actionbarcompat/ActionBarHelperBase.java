@@ -16,15 +16,16 @@
 
 package com.nyaruka.android.actionbarcompat;
 
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
+
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
-
-import com.nyaruka.androidrelay.R;
 
 import android.app.Activity;
 import android.content.Context;
 import android.content.res.XmlResourceParser;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.view.InflateException;
 import android.view.Menu;
@@ -37,12 +38,9 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
+import com.nyaruka.androidrelay.R;
 
 /**
  * A class that implements the action bar pattern for pre-Honeycomb devices.
@@ -85,8 +83,7 @@ public class ActionBarHelperBase extends ActionBarHelper {
     /**
      * Sets up the compatibility action bar with the given title.
      */
-    @SuppressWarnings("deprecation")
-	private void setupActionBar() {
+    private void setupActionBar() {
         final ViewGroup actionBarCompat = getActionBarCompat();
         if (actionBarCompat == null) {
             return;
@@ -172,8 +169,7 @@ public class ActionBarHelperBase extends ActionBarHelper {
      * state can be changed to show a loading spinner using
      * {@link com.nyaruka.android.actionbarcompat.ActionBarHelperBase#setRefreshActionItemState(boolean)}.
      */
-    @SuppressWarnings("deprecation")
-	private View addActionItemCompatFromMenuItem(final MenuItem item) {
+    private View addActionItemCompatFromMenuItem(final MenuItem item) {
         final int itemId = item.getItemId();
 
         final ViewGroup actionBar = getActionBarCompat();
