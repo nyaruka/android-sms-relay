@@ -149,7 +149,6 @@ public class SimpleMenuItem implements MenuItem {
         return false;
     }
 
-    @Override
     public MenuItem setOnActionExpandListener(OnActionExpandListener onActionExpandListener) {
         // Noop
         return this;

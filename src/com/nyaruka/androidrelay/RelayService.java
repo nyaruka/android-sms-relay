@@ -23,7 +23,6 @@ import org.json.JSONObject;
 import com.commonsware.cwac.wakeful.WakefulIntentService;
 import com.nyaruka.androidrelay.data.TextMessage;
 import com.nyaruka.androidrelay.data.TextMessageHelper;
-import com.nyaruka.log.SendLogActivity;
 
 import android.app.Service;
 import android.content.ContentResolver;
@@ -65,7 +64,8 @@ public class RelayService extends Service implements SMSModem.SmsModemListener {
 	public static final Uri APN_TABLE_URI =  Uri.parse("content://telephony/carriers");
 	public static final Uri PREFERRED_APN_URI = Uri.parse("content://telephony/carriers/preferapn");
 	
-	public static boolean isReset = false;
+	public static boolean doReset = false;
+	public static boolean doSendLog = false;
 
 	public int createAPN(String name, String apnAddr) {
 		int id = -1;
@@ -257,7 +257,7 @@ public class RelayService extends Service implements SMSModem.SmsModemListener {
 	 */
 	public static boolean sendAlert(Context context, String subject, String body){
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-		String hostname = prefs.getString("rapidsms_hostname", null);
+		String hostname = prefs.getString("router_hostname", null);
 		
 		Log.d(TAG, "__SENDING ALERT: " + subject);
 		
@@ -271,10 +271,10 @@ public class RelayService extends Service implements SMSModem.SmsModemListener {
 			StringBuilder conf = new StringBuilder();
 			conf.append("SMS Relay Version: " + AndroidRelay.getVersionNumber(context));
 			conf.append("\n");
-			conf.append("\nHostname: " + prefs.getString("rapidsms_hostname", null));
-			String backend = prefs.getString("rapidsms_backend", null);
+			conf.append("\nHostname: " + prefs.getString("router_hostname", null));
+			String backend = prefs.getString("router_backend", null);
 			conf.append("\nBackend:" + backend);
-			conf.append("\nPassword:" + prefs.getString("rapidsms_password", null));
+			conf.append("\nPassword:" + prefs.getString("router_password", null));
 			conf.append("\n");
 			conf.append("\nProcess Incoming:" + prefs.getBoolean("process_incoming", false));
 			conf.append("\nProcess Outgoing:" + prefs.getBoolean("process_outgoing", false));
@@ -304,7 +304,7 @@ public class RelayService extends Service implements SMSModem.SmsModemListener {
 			try{
 				HttpPost post = new HttpPost("http://" + hostname + "/router/alert");
 				List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(2);
-				nameValuePairs.add(new BasicNameValuePair("password", "" + prefs.getString("rapidsms_password", null)));
+				nameValuePairs.add(new BasicNameValuePair("password", "" + prefs.getString("router_password", null)));
 				nameValuePairs.add(new BasicNameValuePair("subject", "[" + backend + "] " + subject));
 				nameValuePairs.add(new BasicNameValuePair("body", body));
 				post.setEntity(new UrlEncodedFormEntity(nameValuePairs));
@@ -329,9 +329,6 @@ public class RelayService extends Service implements SMSModem.SmsModemListener {
 	 */
 	public void toggleConnection(){
 		WifiManager wifi = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
-		m_targetWifiState = UNCHANGED;
-		
-		m_targetWifiState = wifi.isWifiEnabled() ? ON : OFF;
 			
 		// well that didn't work, let's flip our connection status, that might just help.. we sleep a bit so things can connect
 		boolean newWifiState = !wifi.isWifiEnabled();
@@ -342,26 +339,6 @@ public class RelayService extends Service implements SMSModem.SmsModemListener {
 		try{
 			Thread.sleep(30000);
 		} catch (Throwable tt){}
-	}
-
-	public boolean isConnectionToggled(){
-		return m_targetWifiState != UNCHANGED;
-	}
-	
-	/**
-	 * Restores the previous connection settings.  That is if we were on WiFi previously, then this 
-	 * method will reenable WiFi again.
-	 */
-	public void restoreConnection(){
-		WifiManager wifi = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
-		if (m_targetWifiState == OFF){
-			Log.d(TAG, "Restoring WIFI to Off");
-			wifi.setWifiEnabled(false);
-		} else if (m_targetWifiState == ON){
-			Log.d(TAG, "Restoring WIFI to On");
-			wifi.setWifiEnabled(true);
-		}
-		m_targetWifiState = UNCHANGED;
 	}
 	
 	/***
@@ -687,10 +664,7 @@ public class RelayService extends Service implements SMSModem.SmsModemListener {
 		
 		// if someone sends 'keyword log' then send a log to the server
 		if (message.equalsIgnoreCase(keyword + " log")){
-    		final Intent intent = new Intent(SendLogActivity.ACTION_SEND_LOG);
-    		intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            intent.putExtra(SendLogActivity.EXTRA_SEND_INTENT_ACTION, Intent.ACTION_SENDTO);
-            startActivity(intent);
+			RelayService.doSendLog = true;
             
 			int unsynced = helper.withStatus(getApplicationContext(), TextMessage.INCOMING, TextMessage.RECEIVED).size();
 			int erroredOut = helper.withStatus(getApplicationContext(), TextMessage.OUTGOING, TextMessage.ERRORED).size();
@@ -702,8 +676,8 @@ public class RelayService extends Service implements SMSModem.SmsModemListener {
 
 		if(message.equalsIgnoreCase(keyword + " reset")){
 			// change the label to true
-			isReset = true;
-			Log.d(TAG, "The reset process is set to " + Boolean.toString(isReset));
+			doReset = true;
+			Log.d(TAG, "The reset process is set to " + Boolean.toString(doReset));
 			
 			// start the check service for reset changes to take effect
 			kickService();
@@ -798,11 +772,4 @@ public class RelayService extends Service implements SMSModem.SmsModemListener {
 	}
 	
 	public SMSModem modem;
-	
-	public static final int UNCHANGED = 0;
-	public static final int ON = 1;
-	public static final int OFF = -1;
-	
-	/** whether the WiFi network is set */
-	private int m_targetWifiState = UNCHANGED;
 }

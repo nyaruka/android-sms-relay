@@ -50,7 +50,6 @@ public class MainActivity extends ActionBarActivity {
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
 		if ( keyCode == KeyEvent.KEYCODE_MENU ) {
-			Log.d(TAG, "MENU pressed");
 			Intent settingsActivity = new Intent(getBaseContext(), SettingsActivity.class);
 			startActivity(settingsActivity);
 			return true;
