@@ -2,28 +2,22 @@ package com.nyaruka.androidrelay;
 
 import java.net.URLEncoder;
 
-import com.commonsware.cwac.wakeful.WakefulIntentService;
-import com.nyaruka.log.SendLogActivity;
-
 import android.app.AlertDialog;
-
 import android.content.DialogInterface;
-import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.DialogInterface.OnClickListener;
+import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
-import android.net.Uri;
 import android.os.Bundle;
 import android.preference.Preference;
+import android.preference.Preference.OnPreferenceChangeListener;
+import android.preference.Preference.OnPreferenceClickListener;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
-import android.preference.Preference.OnPreferenceClickListener;
-import android.preference.Preference.OnPreferenceChangeListener;
 import android.util.Log;
 import android.view.View;
-import android.view.Window;
-import android.widget.ImageView;
 import android.widget.Toast;
+
+import com.commonsware.cwac.wakeful.WakefulIntentService;
 
 public class SettingsActivity extends PreferenceActivity {
 	public static final String TAG = AndroidRelay.TAG;
@@ -39,7 +33,6 @@ public class SettingsActivity extends PreferenceActivity {
         Preference relayPassword = (Preference) findPreference("relay_password");
         relayPassword.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
 
-			@Override
 			public boolean onPreferenceChange(Preference preference,Object newValue) {
 				String password = newValue.toString();
 				Log.d(TAG, "New password " + password);
@@ -81,10 +74,9 @@ public class SettingsActivity extends PreferenceActivity {
         Preference sendLog = (Preference) findPreference("send_log");
         sendLog.setOnPreferenceClickListener(new OnPreferenceClickListener(){
         	public boolean onPreferenceClick(Preference preference){
-        		final Intent intent = new Intent(SendLogActivity.ACTION_SEND_LOG);
-        		intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                intent.putExtra(SendLogActivity.EXTRA_SEND_INTENT_ACTION, Intent.ACTION_SENDTO);
-                startActivity(intent);
+        		RelayService.doSendLog = true;
+        		WakefulIntentService.scheduleAlarms(new com.nyaruka.androidrelay.AlarmListener(1), getApplicationContext());
+	    	    Toast.makeText(SettingsActivity.this, "Log will be sent shortly.", Toast.LENGTH_LONG).show();
                 return true;
         	}
         });
