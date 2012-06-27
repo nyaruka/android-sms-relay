@@ -6,11 +6,11 @@
         android:title="Relay Preferences" android:key="main">
         
         <CheckBoxPreference 
-            android:defaultValue="true" android:summary="Whether to process incoming SMS messages"
+            android:defaultValue="false" android:summary="Whether to process incoming SMS messages"
             android:key="process_incoming" android:title="Process Incoming"/>
         
         <CheckBoxPreference 
-            android:defaultValue="true" android:summary="Whether to process outgoing messages from the server"
+            android:defaultValue="false" android:summary="Whether to process outgoing messages from the server"
             android:key="process_outgoing" android:title="Process Outgoing"/>
         
 	    <EditTextPreference
