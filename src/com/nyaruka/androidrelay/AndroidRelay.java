@@ -1,16 +1,19 @@
 package com.nyaruka.androidrelay;
 
-import com.nyaruka.androidrelay.data.TextMessageHelper;
-
 import android.app.Application;
 import android.content.Context;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.preference.PreferenceManager;
 import android.telephony.PhoneStateListener;
 import android.telephony.ServiceState;
 import android.telephony.SignalStrength;
 import android.telephony.TelephonyManager;
 import android.util.Log;
+
+import com.nyaruka.androidrelay.data.TextMessageHelper;
 
 public class AndroidRelay extends Application {
 
@@ -22,6 +25,22 @@ public class AndroidRelay extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
+        
+        // migrate old preferences
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        if (prefs.contains("rapidsms_hostname")){
+        	Editor editor = prefs.edit();
+        	editor.putString("router_hostname", prefs.getString("rapidsms_hostname", null));
+        	editor.putString("router_password", prefs.getString("rapidsms_password", null));
+        	editor.putString("router_backend", prefs.getString("rapidsms_backend", null));
+        	
+        	editor.remove("rapidsms_hostname");
+        	editor.remove("rapidsms_password");
+        	editor.remove("rapidsms_backend");
+        	
+        	editor.commit();
+        }
+        
         m_helper = new TextMessageHelper(this);
         m_phoneState = new PhoneState();
         
