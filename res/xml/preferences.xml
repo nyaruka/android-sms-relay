@@ -4,10 +4,10 @@
 
     <PreferenceCategory 
         android:title="Relay Preferences" android:key="main">
-        
-        <CheckBoxPreference 
-            android:defaultValue="false" android:summary="Whether to process incoming SMS messages"
-            android:key="process_incoming" android:title="Process Incoming"/>
+
+        <CheckBoxPreference
+                android:defaultValue="false" android:summary="Whether to process incoming SMS messages"
+                android:key="process_incoming" android:title="Process Incoming"/>
         
         <CheckBoxPreference 
             android:defaultValue="false" android:summary="Whether to process outgoing messages from the server"
@@ -21,8 +21,8 @@
             android:key="pref_net"
             android:title="Preferred Network"
             android:defaultValue="0" 
-            android:entries="@array/preferrednet"
-            android:entryValues="@array/preferrednetvalues"
+            android:entries="@array/preferredNet"
+            android:entryValues="@array/preferredNetValues"
         	android:summary="Choose which network you prefer for usage based on availability in your area"/>    
         
         <ListPreference 
@@ -54,6 +54,9 @@
 </PreferenceCategory>
 
     <PreferenceCategory android:title="Debug">
+        <CheckBoxPreference
+                android:defaultValue="false" android:summary="Whether to toggle airplane mode to regain network access"
+                android:key="toggle_airplane" android:title="Airplane mode reset"/>
         <Preference android:title="Clear Messages" android:summary="Clears all messages in our local database" android:key="clear_messages"/>
         <Preference android:title="Send Debug Log" android:summary="Send a debug log to the administrator" android:key="send_log"/>
     </PreferenceCategory>

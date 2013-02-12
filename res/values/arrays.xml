@@ -2,34 +2,38 @@
 
 <resources>
 
-    <string-array name="preferrednet">
-        <item name="0">WIFI</item>
-        <item name="1">DATA</item>
+    <string-array name="preferredNet">
+        <item>WIFI then GSM</item>
+        <item>GSM then WIFI</item>
+        <item>WIFI only</item>
+        <item>GSM only</item>
     </string-array>
     
-    <string-array name="preferrednetvalues">
-		<item name="0">0</item>
-		<item name="1">1</item>
+    <string-array name="preferredNetValues">
+		<item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
     </string-array>
     
     <string-array name="updateInterval">
-        <item name="15000">Every 15 seconds</item>
-        <item name="30000">Every 30 seconds</item>
-        <item name="60000">Every 1 minute</item>
-        <item name="300000">Every 5 minutes</item>
-        <item name="900000">Every 15 minutes</item>
-        <item name="1800000">Every 30 minutes</item>
-        <item name="3600000">Every hour</item>
+        <item>Every 15 seconds</item>
+        <item>Every 30 seconds</item>
+        <item>Every 1 minute</item>
+        <item>Every 5 minutes</item>
+        <item>Every 15 minutes</item>
+        <item>Every 30 minutes</item>
+        <item>Every hour</item>
     </string-array>
     
     <string-array name="updateIntervalValues">
-        <item name="15000">15000</item>
-        <item name="30000">30000</item>
-        <item name="60000">60000</item>
-        <item name="300000">300000</item>
-        <item name="900000">900000</item>
-        <item name="1800000">1800000</item>
-        <item name="3600000">3600000</item>
+        <item>15000</item>
+        <item>30000</item>
+        <item>60000</item>
+        <item>300000</item>
+        <item>900000</item>
+        <item>1800000</item>
+        <item>3600000</item>
     </string-array>
 
 </resources>

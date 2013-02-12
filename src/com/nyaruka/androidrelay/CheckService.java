@@ -94,9 +94,8 @@ public class CheckService extends WakefulIntentService {
 	 * our current state is the same as our preferred state.
 	 */
 	public void restoreDefaultNetwork(){
-		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-		
-		boolean isWifiPreferred = (prefs.getString("pref_net", "0").equals("0"));
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        boolean isWifiPreferred = Integer.parseInt(prefs.getString("pref_net", "0")) % 2 == 0;
 		WifiManager wifi = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
 		
 		if (wifi.isWifiEnabled() != isWifiPreferred){
@@ -113,8 +112,10 @@ public class CheckService extends WakefulIntentService {
 	protected void doWakefulWork(Intent intent) {
 		Log.d(TAG, "==Check service running");
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-		
-		// make sure our SMS modem is hooked up
+        boolean toggleAirplane = prefs.getBoolean("toggle_airplane", false);
+        boolean toggleConnection = Integer.parseInt(prefs.getString("pref_net", "0")) < 2;
+
+        // make sure our SMS modem is hooked up
 		if (!BootStrapper.checkService(this.getApplicationContext())){
 			Log.d(TAG, "RelayService not started yet, waiting.");
 			schedule(this.getApplicationContext());
@@ -129,7 +130,7 @@ public class CheckService extends WakefulIntentService {
 			return;
 		}
 		
-		if (RelayService.doReset){
+		if (RelayService.doReset && toggleAirplane){
 			Log.d(TAG, "__RESTING PROCESS");
 			try{
 				Log.d(TAG, "__REST - tickling airplane mode");
@@ -167,12 +168,16 @@ public class CheckService extends WakefulIntentService {
 				if (RelayService.sendAlert(getApplicationContext(), "Relay Log", log)){
 					RelayService.doSendLog = false;
 				} else {
-					relayer.toggleConnection();
-					if (RelayService.sendAlert(getApplicationContext(), "Relay Log", log)){
-						RelayService.doSendLog = false;
-					} else {
-						Log.d(TAG, "Failed sending log after two attempts, will retry on next check");
-					}
+                    if (toggleConnection){
+                        relayer.toggleConnection();
+                        if (RelayService.sendAlert(getApplicationContext(), "Relay Log", log)){
+                            RelayService.doSendLog = false;
+                        } else {
+                            Log.d(TAG, "Failed sending log after two attempts, will retry on next check");
+                        }
+                    } else {
+                        Log.d(TAG, "Failed sending log, will retry on next check");
+                    }
 				}
 			} else {
 				Log.d(TAG, "Failed collecting log, will retry on next check");
@@ -190,8 +195,9 @@ public class CheckService extends WakefulIntentService {
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 		boolean process_incoming = prefs.getBoolean("process_incoming", false);
 		boolean process_outgoing = prefs.getBoolean("process_outgoing", false);
+        boolean toggleConnection = Integer.parseInt(prefs.getString("pref_net", "0")) < 2;
 
-		if (process_outgoing){
+        if (process_outgoing){
 			try{
 				relayer.resendErroredSMS();
 			} catch (Throwable t){
@@ -208,12 +214,17 @@ public class CheckService extends WakefulIntentService {
 				relayer.sendPendingMessagesToServer();
 			} catch (IOException e){
 				try{
-					Log.d(TAG, "Error resending to server, toggling connection", e);
-					relayer.toggleConnection();
-					relayer.sendPendingMessagesToServer();
+                    if (toggleConnection){
+                        Log.d(TAG, "Error resending to server, toggling connection", e);
+                        relayer.toggleConnection();
+                        relayer.sendPendingMessagesToServer();
+                    } else {
+                        Log.d(TAG, "__ FAILED TO SEND PENDING MESSAGES");
+                        RelayService.doReset = true;
+                    }
 				} catch (IOException e1){
-					Log.d(TAG, "__ FAILED TO SEND PENDING MESSAGES, SET RESET LABEL TO true");
-					RelayService.doReset = true;
+                    Log.d(TAG, "__ FAILED TO SEND PENDING MESSAGES, SET RESET LABEL TO true");
+                    RelayService.doReset = true;
 				} catch (Throwable tt){
 					Log.d(TAG, "Error sending messages to server", e);
 				}				
@@ -231,12 +242,17 @@ public class CheckService extends WakefulIntentService {
 				relayer.markDeliveriesOnServer();
 			} catch (IOException e){
 				try{
-					Log.d(TAG, "Error marking deliveries on the server, toggling connection", e);
-					relayer.toggleConnection();
-					relayer.markDeliveriesOnServer();
+                    if (toggleConnection){
+                        Log.d(TAG, "Error marking deliveries on the server, toggling connection", e);
+                        relayer.toggleConnection();
+                        relayer.markDeliveriesOnServer();
+                    } else {
+                        Log.d(TAG, "__ FAILED TO MARK DELIVERIES, SET RESET LABEL TO true");
+                        RelayService.doReset = true;
+                    }
 				} catch (IOException e1) {
-					Log.d(TAG, "__ FAILED TO MARK DELIVERIES, SET RESET LABEL TO true");
-					RelayService.doReset = true;
+                    Log.d(TAG, "__ FAILED TO MARK DELIVERIES, SET RESET LABEL TO true");
+                    RelayService.doReset = true;
 				} catch (Throwable tt){
 					Log.d(TAG, "Error marking deliveries on the server", e);
 				}
@@ -252,12 +268,17 @@ public class CheckService extends WakefulIntentService {
 				relayer.checkOutbox();
 			} catch (IOException e){
 				try{
-					Log.d(TAG, "Error checking outbox, toggling connection", e);
-					relayer.toggleConnection();
-					relayer.checkOutbox();
+                    if (toggleConnection){
+                        Log.d(TAG, "Error checking outbox, toggling connection", e);
+                        relayer.toggleConnection();
+                        relayer.checkOutbox();
+                    } else {
+                        Log.d(TAG, "__ FAILED TO CHECK OUTBOX, SET RESET LABEL TO: 'true'");
+                        RelayService.doReset = true;
+                    }
 				} catch (Exception e1) {
-					Log.d(TAG, "__ FAILED TO CHECK OUTBOX, SET RESET LABEL TO: 'true'");
-					RelayService.doReset = true;
+                    Log.d(TAG, "__ FAILED TO CHECK OUTBOX, SET RESET LABEL TO: 'true'");
+                    RelayService.doReset = true;
 				} catch (Throwable tt){
 					Log.d(TAG, "Error checking outbox", e);
 				}

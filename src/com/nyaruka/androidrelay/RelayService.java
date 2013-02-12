@@ -326,7 +326,7 @@ public class RelayService extends Service implements SMSModem.SmsModemListener {
 	 * we try to switch to the mobile network.
 	 */
 	public void toggleConnection(){
-		WifiManager wifi = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+        WifiManager wifi = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
 			
 		// well that didn't work, let's flip our connection status, that might just help.. we sleep a bit so things can connect
 		boolean newWifiState = !wifi.isWifiEnabled();
@@ -468,7 +468,8 @@ public class RelayService extends Service implements SMSModem.SmsModemListener {
 	public void sendMessageToServer(TextMessage msg) throws IOException {
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 		String receiveURL = prefs.getString("receive_url", null);
-		boolean process_outgoing = prefs.getBoolean("process_outgoing", false);
+        boolean process_outgoing = prefs.getBoolean("process_outgoing", false);
+
 		TextMessageHelper helper = getHelper();
 		
 		Log.d(TAG, "Receive URL: " + receiveURL);
